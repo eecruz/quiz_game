@@ -104,23 +104,23 @@ public class ClientWindow implements ActionListener
 		
 		// test code below to demo enable/disable components
 		// DELETE THE CODE BELOW FROM HERE***
-		if(poll.isEnabled())
-		{
-			poll.setEnabled(false);
-			submit.setEnabled(true);
-		}
-		else
-		{
-			poll.setEnabled(true);
-			submit.setEnabled(false);
-		}
-		
-		question.setText("Q2. This is another test problem " + random.nextInt());
-		
-		// you can also enable disable radio buttons
-		options[random.nextInt(4)].setEnabled(false);
-		options[random.nextInt(4)].setEnabled(true);
-		// TILL HERE ***
+//		if(poll.isEnabled())
+//		{
+//			poll.setEnabled(false);
+//			submit.setEnabled(true);
+//		}
+//		else
+//		{
+//			poll.setEnabled(true);
+//			submit.setEnabled(false);
+//		}
+//		
+//		question.setText("Q2. This is another test problem " + random.nextInt());
+//		
+//		// you can also enable disable radio buttons
+//		options[random.nextInt(4)].setEnabled(false);
+//		options[random.nextInt(4)].setEnabled(true);
+//		// TILL HERE ***
 		
 	}
 	
@@ -149,7 +149,7 @@ public class ClientWindow implements ActionListener
 			else
 				timer.setForeground(Color.black);
 			
-			timer.setText(duration+"");
+			timer.setText("TIME: " + duration);
 			duration--;
 			window.repaint();
 		}
