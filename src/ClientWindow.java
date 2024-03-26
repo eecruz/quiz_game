@@ -28,7 +28,8 @@ public class ClientWindow implements ActionListener
 		JOptionPane.showMessageDialog(window, "This is a trivia game");
 		
 		window = new JFrame("Trivia");
-		question = new JLabel("Q1. This is a sample question"); // represents the question
+		question = new JLabel("Q1. This is a sample question"); // represents the question 
+		//question.setText()	
 		window.add(question);
 		question.setBounds(10, 5, 350, 100);;
 		
