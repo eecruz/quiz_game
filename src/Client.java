@@ -37,14 +37,12 @@ public class Client
 			System.exit(1);
 		}
 		
-		try {
-			System.out.println("ATTEMPTING UDP CONNECTION");
-			
+		try {			
 			// Create a DatagramSocket for sending and receiving UDP packets
             DatagramSocket socket = new DatagramSocket();
 
             // Get the IP address of the server (in this case, localhost)
-            InetAddress serverAddress = InetAddress.getByName("localhost");
+            InetAddress serverAddress = InetAddress.getByName(hostName);
             int serverPort = 3849; // Port number the server is listening on
 
             // Sending timestamp to the server
@@ -55,7 +53,6 @@ public class Client
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
             // Send the packet to the server
             socket.send(sendPacket);
-            System.out.println("SENT PACKET" + sendPacket.toString());
 
             // Optional: Receive response from server
             // Create a byte array to store received data

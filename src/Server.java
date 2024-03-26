@@ -14,8 +14,12 @@ public class Server {
 	public static void main(String[] args) throws IOException 
 	{
 		int portNumber = 3849;
+
+		// Threads
 		RunThread runThread = new RunThread();
 		Thread udpThread;
+        ArrayList<Thread> clientThreads = new ArrayList<>();
+		
 		DatagramSocket dgSocket;
 
 		try (ServerSocket serverSocket = new ServerSocket(portNumber)) 
@@ -25,7 +29,6 @@ public class Server {
 
 			// Client connections
 			int clientID = 1;
-			ArrayList<Socket> clientSockets = new ArrayList<>();
 
 			// Start waiting for "start" command
 			runThread.start();
@@ -38,7 +41,10 @@ public class Server {
 				// Create a thread to handle incoming packets
 				udpThread = new Thread(new UDPThread(dgSocket));
 				udpThread.start(); // Start the receiver thread
-			} catch (Exception e) {
+			} 
+			catch (Exception e) 
+			{
+				System.err.println("ERROR INITIALZING UDP SOCKET");
 				e.printStackTrace();
 			}
 
@@ -53,13 +59,12 @@ public class Server {
 					Socket clientSocket = serverSocket.accept();
 					System.out.println("Connection accepted from Client " + clientID);
 
-					// Provide ID to client
-					ObjectOutputStream writer = new ObjectOutputStream(clientSocket.getOutputStream());
-					writer.writeInt(clientID);
-					writer.close();
-
 					// Add client socket to list
-					clientSockets.add(clientSocket);
+					Thread clientThread = new Thread(new ClientThread(clientSocket, clientID));
+					clientThreads.add(clientThread);
+					clientThread.start();
+					
+					// Increment clientID
 					clientID++;
 				} 
 				catch (java.net.SocketTimeoutException e) 
@@ -88,6 +93,7 @@ public class Server {
 }
 
 
+// 
 class RunThread extends Thread 
 {
 	private volatile boolean runCommandReceived = false;
@@ -160,14 +166,11 @@ class UDPThread implements Runnable {
 
 			// Infinite loop to continuously listen for incoming packets
 			while (true) {
-				System.out.println("ATTEMPTING TO RECEIVE PACKET");
 				// Create a DatagramPacket to receive incoming UDP packets
 				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-				System.out.println("PACKET CREATED");
 				
 				// Receive data from the client
 				socket.receive(receivePacket);
-				System.out.println("PACKET RECEIVED");
 				
 				// Convert the received data to a string (in this case, assuming it's a timestamp)
 				String receivedTimestamp = new String(receivePacket.getData());
@@ -191,4 +194,38 @@ class UDPThread implements Runnable {
 			e.printStackTrace();
 		}
 	}
+}
+
+// Thread to handle each client separately
+class ClientThread implements Runnable 
+{
+    private final Socket clientSocket;
+    private final int clientID;
+    
+    public ClientThread(Socket clientSocket, int clientID) 
+    {
+        this.clientSocket = clientSocket;
+        this.clientID = clientID;      
+    }
+
+    @Override
+    public void run() 
+    {
+        try 
+        {
+            // Send client ID to the client
+            ObjectOutputStream writer = new ObjectOutputStream(clientSocket.getOutputStream());
+            writer.writeInt(clientID);
+            writer.flush(); // Flush the stream to ensure data is sent            
+
+            // Close connection
+            writer.close();
+            clientSocket.close();
+        } 
+        catch (IOException e) 
+        {
+            System.err.println("ERROR handling client");
+            e.printStackTrace();
+        }
+    }
 }
