@@ -40,7 +40,7 @@ public class Client
             DatagramSocket socket = new DatagramSocket();
 
             // Get the IP address of the server (in this case, localhost)
-            InetAddress serverAddress = InetAddress.getByName("10.141.65.116");
+            InetAddress serverAddress = InetAddress.getByName(hostName);
             int serverPort = 3849; // Port number the server is listening on
 
             // Sending timestamp to the server
