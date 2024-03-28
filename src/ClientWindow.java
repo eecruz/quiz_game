@@ -30,8 +30,9 @@ public class ClientWindow implements ActionListener
 				"Trivia Game", JOptionPane.PLAIN_MESSAGE);
 		
 		String hostIP = null;
+		int portNumber;
 		
-		// Prevent user from continuing without providing host IP address
+		// Prevent user from continuing without providing valid host IP address
 		while (true) 
 		{
 			// Capture input IP from user
@@ -52,11 +53,41 @@ public class ClientWindow implements ActionListener
             
 			// Invalid IP address provided, prompt the user again
             else
-                JOptionPane.showMessageDialog(null, "Missing or invalid IP address format. Please try again.",
+                JOptionPane.showMessageDialog(window, "Missing or invalid IP address format. Please try again.",
                 		"Invalid IP Address", JOptionPane.ERROR_MESSAGE);
-        }
-        System.out.println("Valid IP address entered: " + hostIP);
-		
+		}
+		System.out.println("Valid IP address entered: " + hostIP);
+
+		// Prevent user from continuing without providing valid port number
+		while (true) 
+		{
+			// Capture input port number from user
+			String port = JOptionPane.showInputDialog(window, 
+					"Please enter the port number used by the host machine (server):", "Trivia Game", JOptionPane.PLAIN_MESSAGE);
+
+			// Trim spaces from input
+			if (port != null)
+				port = port.trim();
+
+			// User clicked the "Cancel" button, close the entire application
+			else    
+				System.exit(0);
+
+			// Valid port number provided, break out of the loop
+			if (isValidPortNumber(port))
+			{
+				portNumber = Integer.valueOf(port);
+				break;
+			}
+				
+			// Invalid port number provided, prompt the user again
+			else
+				JOptionPane.showMessageDialog(window, "Missing or invalid port number. Please enter a number between 1024-65535.",
+						"Invalid Port Number", JOptionPane.ERROR_MESSAGE);
+		}
+		System.out.println("Valid port number entered: " + portNumber);
+
+		// Game window
 		window = new JFrame("Trivia");
 		question = new JLabel("Q1. This is a sample question"); // represents the question
 		window.add(question);
@@ -113,6 +144,25 @@ public class ClientWindow implements ActionListener
         		+ "(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$";
         
     	return ipAddress.matches(ipPattern);
+    }
+
+    // Validate the port number range
+    private static boolean isValidPortNumber(String portNumber) 
+    {
+    	String NumbersRegex = "^[0-9]+$";
+    	
+    	// Ensure port number contains only numbers
+    	if(portNumber.matches(NumbersRegex))
+    	{
+    		int port = Integer.valueOf(portNumber);
+    		
+    		// Ensure port number is in the range 1024-65535
+        	return (1024 <= port && port <= 65535);
+    	}
+    	
+    	// Invalid port number
+    	else
+    		return false;
     }
 
 	// this method is called when you check/uncheck any radio button
