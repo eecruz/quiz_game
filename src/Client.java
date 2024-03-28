@@ -35,14 +35,15 @@ public class Client
 			System.exit(1);
 		}
 		
-		try {			
+		try 
+		{			
 			// Create a DatagramSocket for sending and receiving UDP packets
             DatagramSocket socket = new DatagramSocket();
 
             // Get the IP address of the server (in this case, localhost)
             InetAddress serverAddress = InetAddress.getByName(hostName);
 
-            // Sending clientID to the server
+            // Send clientID to the server
             String id = String.valueOf(clientID);
             byte[] sendData = id.getBytes();
             
@@ -65,7 +66,9 @@ public class Client
 
             // Close the socket
             socket.close();
-        } catch (Exception e) {
+        } 
+		catch (Exception e) 
+		{
             e.printStackTrace();
         }
 		

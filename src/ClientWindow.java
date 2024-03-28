@@ -1,6 +1,12 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.ObjectInputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.TimerTask;
 import java.util.Timer;
@@ -8,16 +14,30 @@ import javax.swing.*;
 
 public class ClientWindow implements ActionListener
 {
+	// Server info
+	private String hostIP;
+	private InetAddress serverAddress;
+	int portNumber;
+	
+	// Sockets
+	private Socket tcpSocket;
+	private DatagramSocket udpSocket;
+	
+	// Buttons
 	private JButton poll;
 	private JButton submit;
 	private JRadioButton options[];
 	private ButtonGroup optionGroup;
+	
+	// Labels
 	private JLabel question;
 	private JLabel timer;
 	private JLabel score;
-	private TimerTask clock;
 	
+	// Other
+	private TimerTask clock;	
 	private JFrame window;
+	private int clientID;
 	
 	private static SecureRandom random = new SecureRandom();
 	
@@ -29,8 +49,8 @@ public class ClientWindow implements ActionListener
 		JOptionPane.showMessageDialog(window, "This is a trivia game", 
 				"Trivia Game", JOptionPane.PLAIN_MESSAGE);
 		
-		String hostIP = null;
-		int portNumber;
+		hostIP = null;
+		clientID = -1;
 		
 		// Prevent user from continuing without providing valid host IP address
 		while (true) 
@@ -48,8 +68,19 @@ public class ClientWindow implements ActionListener
 			    System.exit(0);
 			
 			// Valid IP address provided, break out of the loop
-            if (isValidIPAddress(hostIP))    
+            if (isValidIPAddress(hostIP))
+            {
+            	try 
+            	{
+					serverAddress = InetAddress.getByName(hostIP);
+				} 
+            	catch (UnknownHostException e) 
+            	{
+					System.err.println("Can't determine host IP address");
+            		e.printStackTrace();
+				}
                 break;
+            }
             
 			// Invalid IP address provided, prompt the user again
             else
@@ -134,6 +165,47 @@ public class ClientWindow implements ActionListener
 		window.setVisible(true);
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.setResizable(false);
+		
+		// Attempt TCP connection
+		try 
+		{
+			// Establish TCP connection
+			tcpSocket = new Socket(hostIP, portNumber);
+			System.out.println("Connection accepted");
+			
+			// Receive clientID from server
+			ObjectInputStream reader = new ObjectInputStream(tcpSocket.getInputStream());
+			clientID = reader.readInt();
+			System.out.println("ClientID: " + clientID);
+			
+			// Close connection
+			reader.close();
+			tcpSocket.close();
+		}
+		catch (Exception e) 
+		{
+			System.err.println("Couldn't get I/O for the connection");
+			e.printStackTrace();
+			System.exit(1);
+		}
+		
+		// Attempt UDP connection
+		try 
+		{			
+			// Create a DatagramSocket for sending and receiving UDP packets
+            udpSocket = new DatagramSocket();
+
+            // Get the IP address of the server
+            serverAddress = InetAddress.getByName(hostIP);
+
+            // Close the socket
+//            udpSocket.close();
+        } 
+		catch (Exception e) 
+		{
+            System.err.println("Error establishing UDP connection");
+			e.printStackTrace();
+        }
 	}
 	
 	// Validate the IP address format
@@ -149,10 +221,10 @@ public class ClientWindow implements ActionListener
     // Validate the port number range
     private static boolean isValidPortNumber(String portNumber) 
     {
-    	String NumbersRegex = "^[0-9]+$";
+    	String numbersRegex = "^[0-9]+$";
     	
     	// Ensure port number contains only numbers
-    	if(portNumber.matches(NumbersRegex))
+    	if(portNumber.matches(numbersRegex))
     	{
     		int port = Integer.valueOf(portNumber);
     		
@@ -184,8 +256,28 @@ public class ClientWindow implements ActionListener
 								break;
 			case "Option 4":	// Your code here
 								break;
-			case "Poll":		// Your code here
-								break;
+			case "Poll":
+				try 
+				{
+		            // Send clientID to the server
+		            String id = String.valueOf(clientID);
+		            byte[] sendData = id.getBytes();
+		            
+		            // Create a DatagramPacket to send the clientID data to the server
+		            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, portNumber);
+		            
+		            // Send packet to the server
+		            udpSocket.send(sendPacket);
+		            System.out.println("Sent buzz to server");
+				} 
+				catch (Exception e2) 
+				{
+					System.err.println("Error sending UDP packet");
+					e2.printStackTrace();
+				}
+				
+				break;
+								
 			case "Submit":		// Your code here
 								break;
 			default:
