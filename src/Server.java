@@ -7,22 +7,27 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Server {
 	public static void main(String[] args) throws IOException 
 	{
 		int portNumber = 3849;
-
+        
+        ServerSocket serverSocket = new ServerSocket(portNumber);
+        
 		// Threads
 		RunThread runThread = new RunThread();
+		TCPThread tcpThread = new TCPThread(serverSocket);
 		Thread udpThread;
-        ArrayList<Thread> clientThreads = new ArrayList<>();
 		
 		DatagramSocket dgSocket;
 
-		try (ServerSocket serverSocket = new ServerSocket(portNumber)) 
+		try 
 		{
 			System.out.println("Server created");
 			System.out.println("Waiting for client connections...");
@@ -61,7 +66,8 @@ public class Server {
 
 					// Add client socket to list
 					Thread clientThread = new Thread(new ClientThread(clientSocket, clientID));
-					clientThreads.add(clientThread);
+					tcpThread.addClientThread(clientThread);
+					tcpThread.addClientSocket(clientSocket);
 					clientThread.start();
 					
 					// Increment clientID
@@ -79,6 +85,17 @@ public class Server {
 					break;
 				}
 			}
+			
+			// Continue listening for TCP connections after game starts
+			tcpThread.start();
+			System.out.println("TCPThread started");
+			
+			try {
+	            tcpThread.join(); // Wait for the other thread to finish executing
+	        } catch (InterruptedException e) {
+	            e.printStackTrace();
+	        }
+			
 		} 
 		catch (Exception e) 
 		{
@@ -93,7 +110,7 @@ public class Server {
 }
 
 
-// 
+// Thread to wait for start of game
 class RunThread extends Thread 
 {
 	private volatile boolean runCommandReceived = false;
@@ -102,7 +119,7 @@ class RunThread extends Thread
 	@Override
 	public void run()
 	{
-		// Waits continuously for the "start" command
+		// Wait continuously for the "start" command
 		BufferedReader terminalInput = new BufferedReader(new InputStreamReader(System.in));
 		while (!runCommandReceived) 
 		{
@@ -150,22 +167,101 @@ class RunThread extends Thread
 	}
 }
 
-//Runnable class to handle incoming packets
-class UDPThread implements Runnable {
+// Thread for mid-game client connections
+class TCPThread extends Thread 
+{
+	// Clients
+	private ArrayList<Thread> clientThreads;
+	private ArrayList<Socket> clientSockets;
+	private int clientID;
+
+	// Server
+	private ServerSocket serverSocket;
+
+	// Constructor to initialize the socket
+	public TCPThread(ServerSocket serverSocket) 
+	{
+		// Client list
+        clientThreads = new ArrayList<>();
+        clientSockets = new ArrayList<>();
+        
+        clientID = clientSockets.size();
+		
+        this.serverSocket = serverSocket;
+	}
+	
+	// Add a client to thread list
+	public void addClientThread(Thread clientThread)
+	{
+		clientThreads.add(clientThread);
+	}
+	
+	// Add a client to socket list
+	public void addClientSocket(Socket clientSocket)
+	{
+		clientSockets.add(clientSocket);
+	}
+
+	@Override
+	public void run()
+	{
+		while (true) 
+		{
+			try 
+			{
+				// Set a timeout for accepting new client connections
+				serverSocket.setSoTimeout(1000);
+
+				// Accept connection
+				Socket clientSocket = serverSocket.accept();
+				clientID = clientSockets.size() + 1;
+				System.out.println("Connection accepted from Client " + clientID);
+
+				// Add client socket to list
+				Thread clientThread = new Thread(new ClientThread(clientSocket, clientID));
+				clientThreads.add(clientThread);
+				clientSockets.add(clientSocket);
+				clientThread.start();
+				
+				// Increment clientID
+				//clientID++;
+			} 
+			catch (java.net.SocketTimeoutException e) 
+			{
+				continue;
+			} 
+			catch (IOException e) 
+			{
+				System.err.println("ERROR handling client acceptances");
+				e.printStackTrace();
+				break;
+			}
+		}
+	}
+}
+
+
+// Runnable class to handle incoming packets
+class UDPThread implements Runnable 
+{
 	private DatagramSocket socket;
 
 	// Constructor to initialize the socket
-	public UDPThread(DatagramSocket socket) {
+	public UDPThread(DatagramSocket socket) 
+	{
 		this.socket = socket;
 	}
 
 	@Override
-	public void run() {
-		try {
+	public void run() 
+	{
+		try 
+		{
 			byte[] receiveData = new byte[1024];
 
 			// Infinite loop to continuously listen for incoming packets
-			while (true) {
+			while (true) 
+			{
 				// Create a DatagramPacket to receive incoming UDP packets
 				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 				
@@ -191,7 +287,9 @@ class UDPThread implements Runnable {
 				// Send the response packet back to the client
 				socket.send(sendPacket);
 			}
-		} catch (Exception e) {
+		} 
+		catch (Exception e) 
+		{
 			e.printStackTrace();
 		}
 	}
