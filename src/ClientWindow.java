@@ -25,7 +25,37 @@ public class ClientWindow implements ActionListener
 	
 	public ClientWindow()
 	{
-		JOptionPane.showMessageDialog(window, "This is a trivia game");
+		// Initial user prompt
+		JOptionPane.showMessageDialog(window, "This is a trivia game", 
+				"Trivia Game", JOptionPane.PLAIN_MESSAGE);
+		
+		String hostIP = null;
+		
+		// Prevent user from continuing without providing host IP address
+		while (true) 
+		{
+			// Capture input IP from user
+			hostIP = JOptionPane.showInputDialog(window, "Please enter the IP address of the host machine (server):", 
+					"Trivia Game", JOptionPane.PLAIN_MESSAGE);
+			
+			// Trim spaces from input
+			if (hostIP != null)
+				hostIP = hostIP.trim();
+			
+			// User clicked the "Cancel" button, close the entire application
+			else    
+			    System.exit(0);
+			
+			// Valid IP address provided, break out of the loop
+            if (isValidIPAddress(hostIP))    
+                break;
+            
+			// Invalid IP address provided, prompt the user again
+            else
+                JOptionPane.showMessageDialog(null, "Missing or invalid IP address format. Please try again.",
+                		"Invalid IP Address", JOptionPane.ERROR_MESSAGE);
+        }
+        System.out.println("Valid IP address entered: " + hostIP);
 		
 		window = new JFrame("Trivia");
 		question = new JLabel("Q1. This is a sample question"); // represents the question
@@ -74,6 +104,16 @@ public class ClientWindow implements ActionListener
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.setResizable(false);
 	}
+	
+	// Validate the IP address format
+    private static boolean isValidIPAddress(String ipAddress) 
+    {
+        // Regular expression to validate format
+    	String ipPattern = "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}"
+        		+ "(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$";
+        
+    	return ipAddress.matches(ipPattern);
+    }
 
 	// this method is called when you check/uncheck any radio button
 	// this method is called when you press either of the buttons- submit/poll
