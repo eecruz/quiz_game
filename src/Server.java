@@ -173,17 +173,18 @@ class UDPThread implements Runnable {
 				socket.receive(receivePacket);
 				
 				// Convert the received data to a string (in this case, assuming it's a timestamp)
-				String receivedTimestamp = new String(receivePacket.getData());
-				System.out.println("Received from client: " + receivedTimestamp);
+				String receivedID = new String(receivePacket.getData()).trim();
+				int id = Integer.valueOf(receivedID);
+				System.out.println("Received buzz from client " + id);
 
-				// Process the received data here if needed
+				// (Process the received data here)
 
 				// Get the client's address and port from the received packet
 				InetAddress clientAddress = receivePacket.getAddress();
 				int clientPort = receivePacket.getPort();
 
 				// Respond to the client (optional)
-				String response = "Timestamp received by server";
+				String response = "Buzz received by server";
 				byte[] sendData = response.getBytes();
 				// Create a DatagramPacket to send a response back to the client
 				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);

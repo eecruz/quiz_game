@@ -8,12 +8,15 @@ public class Client
 {	
 	public static void main(String[] args)
 	{
-		String hostName = "10.111.119.204"; // Server's IP
-		int portNumber = 5555;
+		// String hostName = "10.111.119.204"; // Server's IP
+		// int portNumber = 5555;
 		// String hostName = "10.141.65.116"; // Server's IP
 		// int portNumber = 3849;
+		String hostName = "192.168.0.35"; // Server's IP
+		int portNumber = 3849;
+
 		
-		int clientID;
+		int clientID = -1;
 
 		try 
 		{
@@ -37,24 +40,25 @@ public class Client
 			System.exit(1);
 		}
 		
-		try {			
+		try 
+		{			
 			// Create a DatagramSocket for sending and receiving UDP packets
             DatagramSocket socket = new DatagramSocket();
 
             // Get the IP address of the server (in this case, localhost)
             InetAddress serverAddress = InetAddress.getByName(hostName);
-            int serverPort = 3849; // Port number the server is listening on
 
-            // Sending timestamp to the server
-            // Create a timestamp (in this case, current time in milliseconds) to send to the server
-            String timestamp = String.valueOf(System.currentTimeMillis());
-            byte[] sendData = timestamp.getBytes();
-            // Create a DatagramPacket to send the timestamp data to the server
-            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
+            // Send clientID to the server
+            String id = String.valueOf(clientID);
+            byte[] sendData = id.getBytes();
+            
+            // Create a DatagramPacket to send the clientID data to the server
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, portNumber);
+            
             // Send the packet to the server
             socket.send(sendPacket);
 
-            // Optional: Receive response from server
+            // Receive response from server
             // Create a byte array to store received data
             byte[] receiveData = new byte[1024];
             // Create a DatagramPacket to receive a response from the server
@@ -62,12 +66,14 @@ public class Client
             // Receive the response packet from the server
             socket.receive(receivePacket);
             // Convert the received data to a string
-            String response = new String(receivePacket.getData());
+            String response = new String(receivePacket.getData()).trim();
             System.out.println("Response from server: " + response);
 
             // Close the socket
             socket.close();
-        } catch (Exception e) {
+        } 
+		catch (Exception e) 
+		{
             e.printStackTrace();
         }
 		
