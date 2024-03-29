@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -9,22 +10,25 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class Server {
+public class Server 
+{
 	public static void main(String[] args) throws IOException 
 	{
 		int portNumber = 3849;
-        
-        ServerSocket serverSocket = new ServerSocket(portNumber);
-        
+
+		ServerSocket serverSocket = new ServerSocket(portNumber);
+
 		// Threads
 		RunThread runThread = new RunThread();
 		TCPThread tcpThread = new TCPThread(serverSocket);
 		Thread udpThread;
-		
+
 		DatagramSocket dgSocket;
 
 		try 
@@ -37,7 +41,7 @@ public class Server {
 
 			// Start waiting for "start" command
 			runThread.start();
-			
+
 			try 
 			{
 				// Create a DatagramSocket to listen for incoming UDP packets on port 9876
@@ -65,15 +69,15 @@ public class Server {
 					System.out.println("Connection accepted from Client " + clientID);
 
 					// Add client socket to list
-					Thread clientThread = new Thread(new ClientThread(clientSocket, clientID));
+					ClientThread clientThread = new ClientThread(clientSocket, clientID);
 					tcpThread.addClientThread(clientThread);
 					tcpThread.addClientSocket(clientSocket);
 					clientThread.start();
-					
+
 					// Increment clientID
 					clientID++;
 				} 
-				catch (java.net.SocketTimeoutException e) 
+				catch (SocketTimeoutException e) 
 				{
 					// Allow the main thread to periodically check for the "start" command
 					continue;
@@ -85,17 +89,17 @@ public class Server {
 					break;
 				}
 			}
-			
+
 			// Continue listening for TCP connections after game starts
 			tcpThread.start();
 			System.out.println("TCPThread started");
-			
+
 			try {
-	            tcpThread.join(); // Wait for the other thread to finish executing
-	        } catch (InterruptedException e) {
-	            e.printStackTrace();
-	        }
-			
+				tcpThread.join(); // Wait for the other thread to finish executing
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
 		} 
 		catch (Exception e) 
 		{
@@ -171,7 +175,7 @@ class RunThread extends Thread
 class TCPThread extends Thread 
 {
 	// Clients
-	private ArrayList<Thread> clientThreads;
+	private ArrayList<ClientThread> clientThreads;
 	private ArrayList<Socket> clientSockets;
 	private int clientID;
 
@@ -182,20 +186,18 @@ class TCPThread extends Thread
 	public TCPThread(ServerSocket serverSocket) 
 	{
 		// Client list
-        clientThreads = new ArrayList<>();
-        clientSockets = new ArrayList<>();
-        
-        clientID = clientSockets.size();
-		
-        this.serverSocket = serverSocket;
+		clientThreads = new ArrayList<ClientThread>();
+		clientSockets = new ArrayList<Socket>();
+
+		this.serverSocket = serverSocket;
 	}
-	
+
 	// Add a client to thread list
-	public void addClientThread(Thread clientThread)
+	public void addClientThread(ClientThread clientThread)
 	{
 		clientThreads.add(clientThread);
 	}
-	
+
 	// Add a client to socket list
 	public void addClientSocket(Socket clientSocket)
 	{
@@ -205,28 +207,75 @@ class TCPThread extends Thread
 	@Override
 	public void run()
 	{
-		while (true) 
+		// Set clientID based on current number of clients
+		clientID = clientSockets.size() + 1;
+
+		while (true)
 		{
 			try 
 			{
+//				for (Socket socket : clientSockets)
+//				{
+//					System.out.println("SOCKET INFO FOR " + (clientSockets.indexOf(socket) + 1));
+//					if (socket.isClosed())
+//					{
+//						System.out.println("Client disconnected... Removing socket...");
+//						clientSockets.remove(socket);
+//						System.out.println("REMAINING CLIENTS: " + clientSockets.size());
+//					}
+//				}
+//				
+//				for (ClientThread client : clientThreads)
+//				{
+//					System.out.println("THREAD INFO FOR " + client.getClientID());
+//					if (client.isKilled())
+//					{
+//						System.out.println("Removing thread for client " + client.getClientID() + "...");
+//						clientThreads.remove(client);
+//					}
+//				}
+				
+				// Safely remove closed sockets
+				Iterator<Socket> socketIterator = clientSockets.iterator();
+				while (socketIterator.hasNext()) 
+				{
+				    Socket socket = socketIterator.next();
+				    if (socket.isClosed()) 
+				    {
+				        System.out.println("Client disconnected... Removing socket...");
+				        socketIterator.remove(); // Safe removal
+				    }
+				}
+
+				// Safely remove killed clients
+				Iterator<ClientThread> clientThreadIterator = clientThreads.iterator();
+				while (clientThreadIterator.hasNext()) 
+				{
+				    ClientThread client = clientThreadIterator.next();
+				    if (client.isKilled()) 
+				    {
+				        System.out.println("Removing thread for client " + client.getClientID() + "...");
+				        clientThreadIterator.remove(); // Safe removal
+				    }
+				}
+
 				// Set a timeout for accepting new client connections
 				serverSocket.setSoTimeout(1000);
 
 				// Accept connection
 				Socket clientSocket = serverSocket.accept();
-				clientID = clientSockets.size() + 1;
 				System.out.println("Connection accepted from Client " + clientID);
 
 				// Add client socket to list
-				Thread clientThread = new Thread(new ClientThread(clientSocket, clientID));
+				ClientThread clientThread = new ClientThread(clientSocket, clientID);
 				clientThreads.add(clientThread);
 				clientSockets.add(clientSocket);
 				clientThread.start();
-				
+
 				// Increment clientID
-				//clientID++;
+				clientID++;
 			} 
-			catch (java.net.SocketTimeoutException e) 
+			catch (SocketTimeoutException e) 
 			{
 				continue;
 			} 
@@ -264,10 +313,10 @@ class UDPThread implements Runnable
 			{
 				// Create a DatagramPacket to receive incoming UDP packets
 				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-				
+
 				// Receive data from the client
 				socket.receive(receivePacket);
-				
+
 				// Convert the received data to a string (in this case, assuming it's a timestamp)
 				String receivedID = new String(receivePacket.getData()).trim();
 				int id = Integer.valueOf(receivedID);
@@ -296,35 +345,98 @@ class UDPThread implements Runnable
 }
 
 // Thread to handle each client separately
-class ClientThread implements Runnable 
+class ClientThread extends Thread 
 {
-    private final Socket clientSocket;
-    private final int clientID;
-    
-    public ClientThread(Socket clientSocket, int clientID) 
-    {
-        this.clientSocket = clientSocket;
-        this.clientID = clientID;      
-    }
+	private final Socket clientSocket;
+	private final int clientID;
+	private boolean isKilled;
 
-    @Override
-    public void run() 
-    {
-        try 
-        {
-            // Send client ID to the client
-            ObjectOutputStream writer = new ObjectOutputStream(clientSocket.getOutputStream());
-            writer.writeInt(clientID);
-            writer.flush(); // Flush the stream to ensure data is sent            
+	public ClientThread(Socket clientSocket, int clientID) 
+	{
+		this.clientSocket = clientSocket;
+		this.clientID = clientID;
 
-            // Close connection
-            writer.close();
-            clientSocket.close();
-        } 
-        catch (IOException e) 
-        {
-            System.err.println("ERROR handling client");
-            e.printStackTrace();
-        }
-    }
+		isKilled = false;
+	}
+
+	// Return clientID
+	public int getClientID() 
+	{
+		return clientID;
+	}
+
+	// Return whether this client has been killed
+	public boolean isKilled() 
+	{
+		return isKilled;
+	}
+
+	@Override
+	public void run() 
+	{
+		ObjectOutputStream writer = null;
+		ObjectInputStream reader = null;
+		try 
+		{
+			// Send client ID to the client
+			writer = new ObjectOutputStream(clientSocket.getOutputStream());
+
+			writer.writeInt(clientID);
+			writer.flush();           
+
+			// Close connection
+			//writer.close();
+			//clientSocket.close();
+		} 
+		catch (IOException e) 
+		{
+			System.err.println("ERROR handling client");
+			e.printStackTrace();
+		}
+
+
+		try
+		{
+			reader = new ObjectInputStream(clientSocket.getInputStream());
+
+			while (true)
+			{
+				// End client thread
+				if(clientSocket.isClosed())
+					break;
+				
+				try 
+				{
+					clientSocket.setSoTimeout(1000);
+					Object input = reader.readObject();
+
+					// Client requests kill
+					if(input instanceof String && ((String)input).equals("kill"))
+					{
+						clientSocket.close();
+						System.out.println("Killing client " + clientID + "...");
+						isKilled = true;
+					}
+				}
+				catch (SocketTimeoutException e) 
+				{
+					// Prevent blocking while listening for object
+					continue;
+				}
+			} 
+		} 
+		
+		catch (ClassNotFoundException e) 
+		{
+			System.err.println("ERROR receiving input while closing");
+			e.printStackTrace();
+		}
+		
+		catch (IOException e) 
+		{
+			System.err.println("ERROR closing client");
+			e.printStackTrace();
+		} 
+	} 
+
 }
