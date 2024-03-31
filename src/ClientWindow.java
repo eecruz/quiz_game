@@ -1,6 +1,9 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -9,6 +12,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.TimerTask;
+import java.util.Scanner;
 import java.util.Timer;
 import javax.swing.*;
 
@@ -43,7 +47,7 @@ public class ClientWindow implements ActionListener
 	
 	// write setters and getters as you need
 	
-	public ClientWindow()
+	public ClientWindow() throws FileNotFoundException
 	{
 		// Initial user prompt
 		JOptionPane.showMessageDialog(window, "This is a trivia game", 
@@ -116,12 +120,33 @@ public class ClientWindow implements ActionListener
 				JOptionPane.showMessageDialog(window, "Missing or invalid port number. Please enter a number between 1024-65535.",
 						"Invalid Port Number", JOptionPane.ERROR_MESSAGE);
 		}
-		System.out.println("Valid port number entered: " + portNumber);
+		System.out.println("Valid port number entered: " + portNumber); 
+		
+		//attempting new code, Throws is at the top of this, AND ClientWindowTest
+		File file = new File("q2.txt");
+        Scanner scanner = new Scanner (new FileInputStream("q2.txt"));
+        int line = 0; 
+        String first [] = new String[7];
+        while(scanner.hasNext() && line < first.length)
+        { 
+           first[line] = scanner.nextLine(); 
+           line++;
+        //System.out.println(line + "_" + scanner.nextLine());
+          //      line++;
+        } 
 
+        int serverNum = 0; 
+        serverNum = Integer.parseInt(first[0]); 
+        System.out.println(serverNum);
+        // String question; 
+        // question = first[2];  
+		//END 
+
+		
 		// Game window
 		window = new JFrame("Trivia");
 		question = new JLabel("Q1. This is a sample question"); // represents the question 
-		//question.setText()	
+		question.setText(first[2]);	
 		window.add(question);
 		question.setBounds(10, 5, 350, 100);;
 		
