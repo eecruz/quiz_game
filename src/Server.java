@@ -60,7 +60,32 @@ public class Server
 			while (!runThread.isRunCommandReceived()) 
 			{
 				try 
-				{
+				{					
+					// Safely remove closed sockets
+					Iterator<Socket> socketIterator = tcpThread.getClientSockets().iterator();
+					while (socketIterator.hasNext()) 
+					{
+					    Socket socket = socketIterator.next();
+					    if (socket.isClosed()) 
+					    {
+					        System.out.println("Client disconnected... Removing socket...");
+					        socketIterator.remove(); // Safe removal
+					    }
+					}
+
+					// Safely remove killed clients
+					Iterator<ClientThread> clientThreadIterator = tcpThread.getClientThreads().iterator();
+					while (clientThreadIterator.hasNext()) 
+					{
+					    ClientThread client = clientThreadIterator.next();
+					    if (client.isKilled()) 
+					    {
+					        System.out.println("Removing thread for client " + client.getClientID() + "...");
+					        clientThreadIterator.remove(); // Safe removal
+					        System.out.println("Remaining Clients: " + tcpThread.getNumClients());
+					    }
+					}
+					
 					// Set a timeout for accepting new client connections
 					serverSocket.setSoTimeout(1000);
 
@@ -202,6 +227,21 @@ class TCPThread extends Thread
 	public void addClientSocket(Socket clientSocket)
 	{
 		clientSockets.add(clientSocket);
+	}
+	
+	public int getNumClients()
+	{
+		return clientSockets.size();
+	}
+	
+	public ArrayList<ClientThread> getClientThreads()
+	{
+		return clientThreads;
+	}
+	
+	public ArrayList<Socket> getClientSockets()
+	{
+		return clientSockets;
 	}
 
 	@Override
