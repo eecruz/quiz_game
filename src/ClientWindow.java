@@ -1,5 +1,4 @@
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -177,6 +176,7 @@ public class ClientWindow implements ActionListener
 		{
 			Object input = reader.readObject();
 
+			// Game is already in progress
 			if(input instanceof String && ((String)input).equals("wait"))
 			{
 				System.out.println("Game in progress. Waiting for next question...");
@@ -188,6 +188,7 @@ public class ClientWindow implements ActionListener
 				}
 			}
 			
+			// Server starts game
 			else if(input instanceof String && ((String)input).equals("start"))
 			{
 				System.out.println("Starting game...");
@@ -207,6 +208,7 @@ public class ClientWindow implements ActionListener
 			// Do nothing
 		}
 		
+		// Show game GUI
 		question = new JLabel("Q1. This is a sample question"); // represents the question
 		window.add(question);
 		question.setBounds(10, 5, 350, 100);

@@ -5,17 +5,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Server 
 {
@@ -123,12 +118,15 @@ public class Server
 			tcpThread.start();
 			System.out.println("TCPThread started");
 
-			try {
-				tcpThread.join(); // Wait for the other thread to finish executing
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			try 
+			{
+				// Wait for game to finish
+				tcpThread.join();
+			} 
+			catch (InterruptedException e) 
+			{
+				System.err.println("Game interrupted");
 			}
-
 		} 
 		catch (Exception e) 
 		{
@@ -275,28 +273,7 @@ class TCPThread extends Thread
 		while (true)
 		{
 			try 
-			{
-//				for (Socket socket : clientSockets)
-//				{
-//					System.out.println("SOCKET INFO FOR " + (clientSockets.indexOf(socket) + 1));
-//					if (socket.isClosed())
-//					{
-//						System.out.println("Client disconnected... Removing socket...");
-//						clientSockets.remove(socket);
-//						System.out.println("REMAINING CLIENTS: " + clientSockets.size());
-//					}
-//				}
-//				
-//				for (ClientThread client : clientThreads)
-//				{
-//					System.out.println("THREAD INFO FOR " + client.getClientID());
-//					if (client.isKilled())
-//					{
-//						System.out.println("Removing thread for client " + client.getClientID() + "...");
-//						clientThreads.remove(client);
-//					}
-//				}
-				
+			{	
 				// Safely remove closed sockets
 				Iterator<Socket> socketIterator = clientSockets.iterator();
 				while (socketIterator.hasNext()) 
@@ -353,7 +330,7 @@ class TCPThread extends Thread
 }
 
 
-// Runnable class to handle incoming packets
+// Thread to handle incoming UDP packets
 class UDPThread implements Runnable 
 {
 	private DatagramSocket socket;
