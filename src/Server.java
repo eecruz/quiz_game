@@ -12,6 +12,7 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -294,8 +295,9 @@ class TCPThread extends Thread
 				    ClientThread client = clientThreadIterator.next();
 				    if (client.isKilled()) 
 				    {
-				        System.out.println("Removing thread for client " + client.getClientID() + "...");
+				        System.out.println("Removing thread for Client " + client.getClientID() + "...");
 				        clientThreadIterator.remove(); // Safe removal
+				        System.out.println("Remaining Clients: " + getNumClients());
 				    }
 				}
 
@@ -334,11 +336,13 @@ class TCPThread extends Thread
 class UDPThread implements Runnable 
 {
 	private DatagramSocket socket;
+	private ConcurrentLinkedQueue<Integer> clientPolls;
 
 	// Constructor to initialize the socket
 	public UDPThread(DatagramSocket socket) 
 	{
 		this.socket = socket;
+		clientPolls = new ConcurrentLinkedQueue<Integer>();
 	}
 
 	@Override
@@ -357,24 +361,38 @@ class UDPThread implements Runnable
 				// Receive data from the client
 				socket.receive(receivePacket);
 
-				// Convert the received data to a string (in this case, assuming it's a timestamp)
+				// Convert the received data to a string (then to an integer)
 				String receivedID = new String(receivePacket.getData()).trim();
 				int id = Integer.valueOf(receivedID);
-				System.out.println("Received buzz from client " + id);
+				System.out.println("Received buzz from Client " + id);
 
-				// (Process the received data here)
+				// Add client's buzz to queue
+				clientPolls.add(Integer.valueOf(id));
+				
+				System.out.println("QUEUE: ");
+				for(int i = 0; i < clientPolls.size(); i++)
+				{
+					Object[] array = clientPolls.toArray();
+					
+					if(i != clientPolls.size() - 1)
+						System.out.print(array[i].toString() + ", ");
+					
+					else
+						System.out.println(array[i].toString());
+				}
+				
 
-				// Get the client's address and port from the received packet
-				InetAddress clientAddress = receivePacket.getAddress();
-				int clientPort = receivePacket.getPort();
-
-				// Respond to the client (optional)
-				String response = "Buzz received by server";
-				byte[] sendData = response.getBytes();
-				// Create a DatagramPacket to send a response back to the client
-				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
-				// Send the response packet back to the client
-				socket.send(sendPacket);
+//				// Get the client's address and port from the received packet
+//				InetAddress clientAddress = receivePacket.getAddress();
+//				int clientPort = receivePacket.getPort();
+//
+//				// Respond to the client
+//				String response = "Buzz received by server";
+//				byte[] sendData = response.getBytes();
+//				// Create a DatagramPacket to send a response back to the client
+//				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
+//				// Send the response packet back to the client
+//				socket.send(sendPacket);
 			}
 		} 
 		catch (Exception e) 
@@ -454,7 +472,7 @@ class ClientThread extends Thread
 					if(input instanceof String && ((String)input).equals("kill"))
 					{
 						clientSocket.close();
-						System.out.println("Killing client " + clientID + "...");
+						System.out.println("Killing Client " + clientID + "...");
 						isKilled = true;
 					}
 				}
