@@ -1,4 +1,5 @@
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -26,6 +27,10 @@ public class ClientWindow implements ActionListener
 	// Sockets
 	private Socket tcpSocket;
 	private DatagramSocket udpSocket;
+	
+	// Connections
+	private ObjectOutputStream writer;
+	private ObjectInputStream reader;
 	
 	// Buttons
 	private JButton poll;
@@ -122,11 +127,89 @@ public class ClientWindow implements ActionListener
 		}
 		System.out.println("Valid port number entered: " + portNumber);
 
+		// Attempt TCP connection
+		try 
+		{
+			// Establish TCP connection
+			tcpSocket = new Socket(hostIP, portNumber);
+			System.out.println("Connection accepted");
+			
+			// Initialize reader and writer
+			writer = new ObjectOutputStream(tcpSocket.getOutputStream());
+			reader = new ObjectInputStream(tcpSocket.getInputStream());
+			
+			// Receive clientID from server
+			clientID = reader.readInt();
+			System.out.println("ClientID: " + clientID);
+		}
+		catch (Exception e) 
+		{
+			System.err.println("Couldn't get I/O for the connection");
+			e.printStackTrace();
+			System.exit(1);
+		}
+		
+		// Attempt UDP connection
+		try 
+		{			
+			// Create a DatagramSocket for sending and receiving UDP packets
+            udpSocket = new DatagramSocket();
+
+            // Get the IP address of the server
+            serverAddress = InetAddress.getByName(hostIP);
+        } 
+		catch (Exception e) 
+		{
+            System.err.println("Error establishing UDP connection");
+			e.printStackTrace();
+        }
+				
 		// Game window
 		window = new GameFrame();
+		
+		// Create temporary screen before game starts
+		JLabel waitingLabel = new JLabel("Waiting for game to start...");
+		window.add(waitingLabel);
+		waitingLabel.setBounds(10, 5, 350, 100);
+		
+		// Wait for server to start game
+		try 
+		{
+			Object input = reader.readObject();
+
+			if(input instanceof String && ((String)input).equals("wait"))
+			{
+				System.out.println("Game in progress. Waiting for next question...");
+				waitingLabel.setText("Game in progress. Please wait for next question...");
+				
+				while (true)
+				{
+					// Wait for "next" from server
+				}
+			}
+			
+			else if(input instanceof String && ((String)input).equals("start"))
+			{
+				System.out.println("Starting game...");
+				waitingLabel.setVisible(false);
+			}
+		} 
+		
+		catch (ClassNotFoundException e) 
+		{
+			System.err.println("ERROR starting game: ClassNotFound");
+			e.printStackTrace();
+		} 
+		
+		// Client closed before game started
+		catch (IOException e) 
+		{
+			// Do nothing
+		}
+		
 		question = new JLabel("Q1. This is a sample question"); // represents the question
 		window.add(question);
-		question.setBounds(10, 5, 350, 100);;
+		question.setBounds(10, 5, 350, 100);
 		
 		options = new JRadioButton[4];
 		optionGroup = new ButtonGroup();
@@ -170,46 +253,9 @@ public class ClientWindow implements ActionListener
 //		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 //		window.setResizable(false);
 		
-		// Attempt TCP connection
-		try 
-		{
-			// Establish TCP connection
-			tcpSocket = new Socket(hostIP, portNumber);
-			System.out.println("Connection accepted");
-			
-			// Receive clientID from server
-			ObjectInputStream reader = new ObjectInputStream(tcpSocket.getInputStream());
-			clientID = reader.readInt();
-			System.out.println("ClientID: " + clientID);
-		}
-		catch (Exception e) 
-		{
-			System.err.println("Couldn't get I/O for the connection");
-			e.printStackTrace();
-			System.exit(1);
-		}
-		
-		// Attempt UDP connection
-		try 
-		{			
-			// Create a DatagramSocket for sending and receiving UDP packets
-            udpSocket = new DatagramSocket();
-
-            // Get the IP address of the server
-            serverAddress = InetAddress.getByName(hostIP);
-
-            // Close the socket
-//            udpSocket.close();
-        } 
-		catch (Exception e) 
-		{
-            System.err.println("Error establishing UDP connection");
-			e.printStackTrace();
-        }
-		
 		while (true)
 		{
-			
+			// Keep client running (simulates multiple questions)
 		}
 	}
 	
@@ -323,10 +369,11 @@ public class ClientWindow implements ActionListener
 	            @Override
 	            public void windowClosing(WindowEvent e) 
 	            {
-	                try 
+	            	System.out.println("Closing client connection...");
+	            	
+	            	try 
 	                {
 						// Send kill request on close
-	                	ObjectOutputStream writer = new ObjectOutputStream(tcpSocket.getOutputStream());
 						writer.writeObject("kill");
 						writer.flush();
 					} 
@@ -335,8 +382,8 @@ public class ClientWindow implements ActionListener
 						System.err.println("ERROR terminating connection");
 						e1.printStackTrace();
 					} 
-	            	
-	            	System.out.println("Closing client connection...");
+
+	    			System.out.print("Game closed");
 	            }
 	        });
 	        

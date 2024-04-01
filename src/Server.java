@@ -87,6 +87,9 @@ public class Server
 					    }
 					}
 					
+					// Roll back disconnected clientIDs before game starts
+					clientID = tcpThread.getNumClients() + 1;
+					
 					// Set a timeout for accepting new client connections
 					serverSocket.setSoTimeout(1000);
 
@@ -95,7 +98,7 @@ public class Server
 					System.out.println("Connection accepted from Client " + clientID);
 
 					// Add client socket to list
-					ClientThread clientThread = new ClientThread(clientSocket, clientID);
+					ClientThread clientThread = new ClientThread(clientSocket, clientID, tcpThread);
 					tcpThread.addClientThread(clientThread);
 					tcpThread.addClientSocket(clientSocket);
 					clientThread.start();
@@ -204,6 +207,8 @@ class TCPThread extends Thread
 	private ArrayList<ClientThread> clientThreads;
 	private ArrayList<Socket> clientSockets;
 	private int clientID;
+	
+	private boolean gameInProgress;
 
 	// Server
 	private ServerSocket serverSocket;
@@ -216,6 +221,8 @@ class TCPThread extends Thread
 		clientSockets = new ArrayList<Socket>();
 
 		this.serverSocket = serverSocket;
+		
+		gameInProgress = false;
 	}
 
 	// Add a client to thread list
@@ -235,6 +242,11 @@ class TCPThread extends Thread
 		return clientSockets.size();
 	}
 	
+	public boolean gameInProgress()
+	{
+		return gameInProgress;
+	}
+	
 	public ArrayList<ClientThread> getClientThreads()
 	{
 		return clientThreads;
@@ -251,6 +263,15 @@ class TCPThread extends Thread
 		// Set clientID based on current number of clients
 		clientID = clientSockets.size() + 1;
 
+		gameInProgress = true;
+
+		// Tell clients to start game
+		for(ClientThread client : clientThreads)
+		{
+			client.writeStringToClient("start");
+		}
+		
+		
 		while (true)
 		{
 			try 
@@ -309,7 +330,7 @@ class TCPThread extends Thread
 				System.out.println("Connection accepted from Client " + clientID);
 
 				// Add client socket to list
-				ClientThread clientThread = new ClientThread(clientSocket, clientID);
+				ClientThread clientThread = new ClientThread(clientSocket, clientID, this);
 				clientThreads.add(clientThread);
 				clientSockets.add(clientSocket);
 				clientThread.start();
@@ -408,13 +429,28 @@ class ClientThread extends Thread
 	private final Socket clientSocket;
 	private final int clientID;
 	private boolean isKilled;
+	private ObjectOutputStream writer;
+	private TCPThread tcpThread;
 
-	public ClientThread(Socket clientSocket, int clientID) 
+	public ClientThread(Socket clientSocket, int clientID, TCPThread tcpThread) 
 	{
 		this.clientSocket = clientSocket;
 		this.clientID = clientID;
-
+		
 		isKilled = false;
+
+		this.tcpThread = tcpThread;
+		
+		try 
+		{
+			writer = new ObjectOutputStream(clientSocket.getOutputStream());
+		} 
+		
+		catch (IOException e) 
+		{
+			System.err.println("ERROR initializing writer for Client " + clientID);
+			e.printStackTrace();
+		}
 	}
 
 	// Return clientID
@@ -428,30 +464,45 @@ class ClientThread extends Thread
 	{
 		return isKilled;
 	}
+	
+	public void writeStringToClient(String str) 
+	{
+		try 
+		{
+			writer.writeObject(str);
+			writer.flush();
+		} 
+		catch (IOException e) 
+		{
+			System.err.println("ERROR writing to client " + clientID);
+			e.printStackTrace();
+		}
+	}
+	
+	public void writeIntToClient(int x) 
+	{
+		try 
+		{
+			writer.writeInt(x);
+			writer.flush();
+		} 
+		catch (IOException e) 
+		{
+			System.err.println("ERROR writing to client " + clientID);
+			e.printStackTrace();
+		}
+	}
 
 	@Override
 	public void run() 
 	{
-		ObjectOutputStream writer = null;
 		ObjectInputStream reader = null;
-		try 
-		{
-			// Send client ID to the client
-			writer = new ObjectOutputStream(clientSocket.getOutputStream());
 
-			writer.writeInt(clientID);
-			writer.flush();           
-
-			// Close connection
-			//writer.close();
-			//clientSocket.close();
-		} 
-		catch (IOException e) 
-		{
-			System.err.println("ERROR handling client");
-			e.printStackTrace();
-		}
-
+		// Send client ID to the client
+		writeIntToClient(clientID);
+		
+		if(tcpThread.gameInProgress())
+			writeStringToClient("wait");
 
 		try
 		{
