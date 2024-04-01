@@ -8,8 +8,14 @@ public class Client
 {	
 	public static void main(String[] args)
 	{
-		String hostName = "192.168.0.35"; // Server's IP
+		//String hostName = "10.111.119.204"; // Server's IP 
+		String hostName = "10.111.157.252";
+		// int portNumber = 5555;
+		// String hostName = "10.141.65.116"; // Server's IP
+		// int portNumber = 3849;
+		// String hostName = "192.168.0.35"; // Server's IP
 		int portNumber = 3849;
+
 		
 		int clientID = -1;
 

@@ -53,7 +53,7 @@ public class Server
 				e.printStackTrace();
 			}
 
-			while (!runThread.isRunCommandReceived()) 
+			while (!runThread.isRunCommandReceived())  //eseentially while true
 			{
 				try 
 				{					

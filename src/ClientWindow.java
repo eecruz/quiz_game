@@ -1,6 +1,9 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -13,6 +16,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.TimerTask;
+import java.util.Scanner;
 import java.util.Timer;
 import javax.swing.*;
 
@@ -51,7 +55,7 @@ public class ClientWindow implements ActionListener
 	
 	// write setters and getters as you need
 	
-	public ClientWindow()
+	public ClientWindow() throws FileNotFoundException
 	{
 		// Initial user prompt
 		JOptionPane.showMessageDialog(window, "This is a trivia game", 
@@ -162,7 +166,9 @@ public class ClientWindow implements ActionListener
             System.err.println("Error establishing UDP connection");
 			e.printStackTrace();
         }
-				
+				 
+		 
+		
 		// Game window
 		window = new GameFrame();
 		
@@ -208,10 +214,23 @@ public class ClientWindow implements ActionListener
 			// Do nothing
 		}
 		
-		// Show game GUI
+		//here my code starts 
+		File file = new File("q2.txt");
+        Scanner scanner = new Scanner (new FileInputStream("q2.txt"));
+        int line = 0; 
+        String first [] = new String[5];
+        while(scanner.hasNext() && line < first.length)
+        { 
+           first[line] = scanner.nextLine(); 
+           line++;
+        //System.out.println(line + "_" + scanner.nextLine());
+          //      line++;
+        } 
+
 		question = new JLabel("Q1. This is a sample question"); // represents the question
 		window.add(question);
-		question.setBounds(10, 5, 350, 100);
+		question.setBounds(10, 5, 350, 100);  
+		question.setText(first[0]);
 		
 		options = new JRadioButton[4];
 		optionGroup = new ButtonGroup();
