@@ -1,4 +1,7 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -8,8 +11,11 @@ import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Server 
@@ -53,7 +59,8 @@ public class Server
 				e.printStackTrace();
 			}
 
-			while (!runThread.isRunCommandReceived())  //eseentially while true
+			// Accept connections from clients before game starts
+			while (!runThread.isRunCommandReceived())
 			{
 				try 
 				{					
@@ -118,6 +125,27 @@ public class Server
 			tcpThread.start();
 			System.out.println("TCPThread started");
 
+			// Tell clients to start game
+			tcpThread.writeStringToAllClients("start");
+			
+			//TODO Loop through multiple questions to send to clients
+			Path tempFile = Files.createTempFile("question", ".txt");
+	        try (BufferedWriter fileWriter = Files.newBufferedWriter(tempFile)) 
+	        {
+	        	File file = new File("question_format.txt");
+				Scanner scanner = new Scanner (new FileInputStream(file));
+				
+				// Write question to temporary file
+				while(scanner.hasNext())
+				{
+					fileWriter.write(scanner.nextLine());
+					fileWriter.newLine();
+				}
+				
+				// Write question file to all clients
+				tcpThread.writeFileToAllClients(tempFile.toFile());
+	        }
+			
 			try 
 			{
 				// Wait for game to finish
@@ -254,6 +282,22 @@ class TCPThread extends Thread
 	{
 		return clientSockets;
 	}
+	
+	public void writeStringToAllClients(String str) 
+	{
+		for(ClientThread client : clientThreads)
+		{
+			client.writeStringToClient(str);
+		}
+	}
+	
+	public void writeFileToAllClients(File file)
+	{
+		for(ClientThread client : clientThreads)
+		{
+			client.writeFileToClient(file);
+		}
+	}
 
 	@Override
 	public void run()
@@ -261,14 +305,8 @@ class TCPThread extends Thread
 		// Set clientID based on current number of clients
 		clientID = clientSockets.size() + 1;
 
+		// Indicate game has started
 		gameInProgress = true;
-
-		// Tell clients to start game
-		for(ClientThread client : clientThreads)
-		{
-			client.writeStringToClient("start");
-		}
-		
 		
 		while (true)
 		{
@@ -442,6 +480,20 @@ class ClientThread extends Thread
 		return isKilled;
 	}
 	
+	public void writeFileToClient(File file) 
+	{
+		try 
+		{
+			writer.writeObject(file);
+			writer.flush();
+		} 
+		catch (IOException e) 
+		{
+			System.err.println("ERROR writing file to client " + clientID);
+			e.printStackTrace();
+		}
+	}
+	
 	public void writeStringToClient(String str) 
 	{
 		try 
@@ -451,7 +503,7 @@ class ClientThread extends Thread
 		} 
 		catch (IOException e) 
 		{
-			System.err.println("ERROR writing to client " + clientID);
+			System.err.println("ERROR writing string to client " + clientID);
 			e.printStackTrace();
 		}
 	}
@@ -465,7 +517,7 @@ class ClientThread extends Thread
 		} 
 		catch (IOException e) 
 		{
-			System.err.println("ERROR writing to client " + clientID);
+			System.err.println("ERROR writing integer to client " + clientID);
 			e.printStackTrace();
 		}
 	}
