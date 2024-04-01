@@ -4,7 +4,11 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -126,7 +130,7 @@ public class ClientWindow implements ActionListener
 		File file = new File("q2.txt");
         Scanner scanner = new Scanner (new FileInputStream("q2.txt"));
         int line = 0; 
-        String first [] = new String[7];
+        String first [] = new String[5];
         while(scanner.hasNext() && line < first.length)
         { 
            first[line] = scanner.nextLine(); 
@@ -144,9 +148,10 @@ public class ClientWindow implements ActionListener
 
 		
 		// Game window
-		window = new JFrame("Trivia");
+		window = new GameFrame(); 
+		//window = new JFrame("Trivia");
 		question = new JLabel("Q1. This is a sample question"); // represents the question 
-		question.setText(first[2]);	
+		question.setText(first[0]);	
 		window.add(question);
 		question.setBounds(10, 5, 350, 100);;
 		
@@ -185,12 +190,12 @@ public class ClientWindow implements ActionListener
 		window.add(submit);
 		
 		
-		window.setSize(400,400);
-		window.setBounds(50, 50, 400, 400);
-		window.setLayout(null);
-		window.setVisible(true);
-		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		window.setResizable(false);
+//		window.setSize(400,400);
+//		window.setBounds(50, 50, 400, 400);
+//		window.setLayout(null);
+//		window.setVisible(true);
+//		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//		window.setResizable(false);
 		
 		// Attempt TCP connection
 		try 
@@ -203,10 +208,6 @@ public class ClientWindow implements ActionListener
 			ObjectInputStream reader = new ObjectInputStream(tcpSocket.getInputStream());
 			clientID = reader.readInt();
 			System.out.println("ClientID: " + clientID);
-			
-			// Close connection
-			reader.close();
-			tcpSocket.close();
 		}
 		catch (Exception e) 
 		{
@@ -232,6 +233,11 @@ public class ClientWindow implements ActionListener
             System.err.println("Error establishing UDP connection");
 			e.printStackTrace();
         }
+		
+		while (true)
+		{
+			
+		}
 	}
 	
 	// Validate the IP address format
@@ -330,6 +336,45 @@ public class ClientWindow implements ActionListener
 //		options[random.nextInt(4)].setEnabled(true);
 //		// TILL HERE ***
 		
+	}
+	
+	public class GameFrame extends JFrame 
+	{	
+		public GameFrame() 
+	    {
+	        super("Trivia");
+	        
+	        // Add a WindowListener to the frame
+	        addWindowListener(new WindowAdapter() 
+	        {
+	            @Override
+	            public void windowClosing(WindowEvent e) 
+	            {
+	                try 
+	                {
+						// Send kill request on close
+	                	ObjectOutputStream writer = new ObjectOutputStream(tcpSocket.getOutputStream());
+						writer.writeObject("kill");
+						writer.flush();
+					} 
+	                catch (IOException e1) 
+	                {
+						System.err.println("ERROR terminating connection");
+						e1.printStackTrace();
+					} 
+	            	
+	            	System.out.println("Closing client connection...");
+	            }
+	        });
+	        
+	        // Set frame properties
+	        setSize(400,400);
+			setBounds(50, 50, 400, 400);
+			setLayout(null);
+			setVisible(true);
+			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			setResizable(false);
+	    }
 	}
 	
 	// this class is responsible for running the timer on the window

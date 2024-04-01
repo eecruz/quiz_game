@@ -46,7 +46,7 @@ public class Client
 			// Create a DatagramSocket for sending and receiving UDP packets
             DatagramSocket socket = new DatagramSocket();
 
-            // Get the IP address of the server (in this case, localhost)
+            // Get the IP address of the server
             InetAddress serverAddress = InetAddress.getByName(hostName);
 
             // Send clientID to the server
