@@ -217,19 +217,6 @@ public class ClientWindow implements ActionListener
 			// Do nothing
 		}
 
-		//		//here my code starts 
-		//		File file = new File("q2.txt");
-		//        Scanner scanner = new Scanner (new FileInputStream("q2.txt"));
-		//        int line = 0; 
-		//        String first [] = new String[5];
-		//        while(scanner.hasNext() && line < first.length)
-		//        { 
-		//           first[line] = scanner.nextLine(); 
-		//           line++;
-		//        //System.out.println(line + "_" + scanner.nextLine());
-		//          //      line++;
-		//        } 
-
 		question = new JLabel(); // represents the question
 		window.add(question);
 		question.setBounds(10, 5, 350, 100);  
@@ -268,20 +255,12 @@ public class ClientWindow implements ActionListener
 		submit.addActionListener(this);  // calls actionPerformed of this class
 		window.add(submit);
 
-
-		//		window.setSize(400,400);
-		//		window.setBounds(50, 50, 400, 400);
-		//		window.setLayout(null);
-		//		window.setVisible(true);
-		//		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		//		window.setResizable(false);
-
 		// Read and display questions from server
 		while (true)
 		{
 			Object input;
 			
-			try 
+			try
 			{
 				while ((input = reader.readObject()) != null) 
 				{
@@ -293,25 +272,27 @@ public class ClientWindow implements ActionListener
 					// Process the file
 					if (input instanceof File) 
 					{
-						String[] strList = new String[5];	
+						String[] questionInfo = new String[5];
 						File tempFile = (File) input;
 						Scanner scanner = new Scanner (new FileInputStream(tempFile));
 						int index = 0;
 
+						// Read values from file
 						while (scanner.hasNext() && index < 5)
 						{
-							strList[index] = scanner.nextLine();
+							questionInfo[index] = scanner.nextLine();
 							index++;
 						}
 						
-						question.setText(strList[0]);
+						// Display questions and answers from file
+						question.setText(questionInfo[0]);
 						for (int i = 0; i <= 3; i++)
 						{
-							options[i].setText(strList[i + 1]);
+							options[i].setText(questionInfo[i + 1]);
 						}
 					}
 				}
-			} 
+			}
 			
 			catch (ClassNotFoundException e) 
 			{
@@ -364,7 +345,7 @@ public class ClientWindow implements ActionListener
 
 	private void readQuestion() 
 	{
-
+		
 	}
 
 	// this method is called when you check/uncheck any radio button
@@ -373,20 +354,9 @@ public class ClientWindow implements ActionListener
 	public void actionPerformed(ActionEvent e)
 	{
 		System.out.println("You clicked " + e.getActionCommand());
-
-		// input refers to the radio button you selected or button you clicked
-		String input = e.getActionCommand();  
-		switch(input)
+		
+		if (e.getSource().equals(poll))
 		{
-		case "Option 1":	// Your code here
-			break;
-		case "Option 2":	// Your code here
-			break;
-		case "Option 3":	// Your code here
-			break;
-		case "Option 4":	// Your code here
-			break;
-		case "Poll":
 			try 
 			{
 				// Send clientID to the server
@@ -405,14 +375,66 @@ public class ClientWindow implements ActionListener
 				System.err.println("Error sending UDP packet");
 				e2.printStackTrace();
 			}
-
-			break;
-
-		case "Submit":		// Your code here
-			break;
-		default:
-			System.out.println("Incorrect Option");
 		}
+		
+		else if (e.getSource().equals(submit))
+		{
+			String userAnswer = null;
+			
+			if (options[0].isSelected())
+				userAnswer = options[0].getText();
+			else if (options[1].isSelected())
+				userAnswer = options[1].getText();
+			else if (options[2].isSelected())
+				userAnswer = options[2].getText();
+			else if (options[3].isSelected())
+				userAnswer = options[3].getText();
+			else
+				{/*no answer*/}
+			
+			System.out.println("Submitted: " + userAnswer);
+		}
+		
+//		// input refers to the radio button you selected or button you clicked
+//		String input = e.getActionCommand();  
+//		switch(input)
+//		{
+//		case "Option 1":	// Your code here
+//			break;
+//		case "Option 2":	// Your code here
+//			break;
+//		case "Option 3":	// Your code here
+//			break;
+//		case "Option 4":	// Your code here
+//			break;
+//		case "Poll":
+//			try 
+//			{
+//				// Send clientID to the server
+//				String id = String.valueOf(clientID);
+//				byte[] sendData = id.getBytes();
+//
+//				// Create a DatagramPacket to send the clientID data to the server
+//				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, portNumber);
+//
+//				// Send packet to the server
+//				udpSocket.send(sendPacket);
+//				System.out.println("Sent buzz to server");
+//			} 
+//			catch (Exception e2) 
+//			{
+//				System.err.println("Error sending UDP packet");
+//				e2.printStackTrace();
+//			}
+//
+//			break;
+//
+//		case "Submit":		// Your code here
+//			System.out.println("Submitted: " + optionGroup.getSelection().toString());
+//			break;
+//		default:
+//			System.out.println("Incorrect Option");
+//		}
 
 		// test code below to demo enable/disable components
 		// DELETE THE CODE BELOW FROM HERE***
@@ -463,7 +485,7 @@ public class ClientWindow implements ActionListener
 					} 
 
 					System.out.println("Game closed");
-					System.exit(1);
+					System.exit(0);
 				}
 			});
 
