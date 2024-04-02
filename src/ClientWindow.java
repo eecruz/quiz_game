@@ -502,41 +502,88 @@ public class ClientWindow implements ActionListener
 	}
 
 	// this class is responsible for running the timer on the window
-	public class TimerCode extends TimerTask
-	{
-		private int duration;  // write setters and getters as you need
-		public TimerCode(int duration)
-		{
+	public class TimerCode extends TimerTask {
+		private int duration;
+	
+		public TimerCode(int duration) {
 			this.duration = duration;
 		}
+	
 		@Override
-		public void run()
-		{
-			if(duration < 0)
-			{
-				timer.setText("Timer expired");
-				window.repaint();
-				timer.setText("Timer expired");
-				window.repaint();
-				poll.setEnabled(false);
-				submit.setEnabled(true);
-				options[0].setEnabled(true);
-				options[1].setEnabled(true);
-				options[2].setEnabled(true);
-				options[3].setEnabled(true);
-				this.cancel();  // cancel the timed task
-				return;
-				// you can enable/disable your buttons for poll/submit here as needed
+		public void run() {
+			if (duration == 0) {
+				this.cancel();
+				try {
+					timerExpiredActions();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
-
-			if(duration < 6)
+	
+			if (duration < 6)
 				timer.setForeground(Color.red);
 			else
 				timer.setForeground(Color.black);
-
+	
 			timer.setText("TIME: " + duration);
 			duration--;
 			window.repaint();
+		}
+	
+		private void timerExpiredActions() throws InterruptedException {
+			timer.setText("Timer expired");
+			window.repaint();
+
+
+			//Wait 2 seconds before changing the buttons and restarting the timer
+			Thread.sleep(2000);
+			poll.setEnabled(false);
+			submit.setEnabled(true);
+			options[0].setEnabled(true);
+			options[1].setEnabled(true);
+			options[2].setEnabled(true);
+			options[3].setEnabled(true);
+
+			//Start the second timer where Singular client has 10 seconds to answer
+			clock = new TimerCode2(10);  // represents clocked task that should run after X seconds
+			Timer t = new Timer();  // event generator
+			t.schedule(clock, 0, 1000); // clock is called every second
+			window.add(timer);
+		}
+	}
+
+	public class TimerCode2 extends TimerTask {
+		private int duration;
+	
+		public TimerCode2(int duration) {
+			this.duration = duration;
+		}
+	
+		@Override
+		public void run() {
+			if (duration == 0) {
+				this.cancel();
+				try {
+					timerExpiredActions();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+	
+			if (duration < 6)
+				timer.setForeground(Color.red);
+			else
+				timer.setForeground(Color.black);
+	
+			timer.setText("TIME: " + duration);
+			duration--;
+			window.repaint();
+		}
+	
+		private void timerExpiredActions() throws InterruptedException {
+			timer.setText("Timer expired");
 		}
 	}
 
