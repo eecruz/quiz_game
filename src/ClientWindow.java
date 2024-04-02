@@ -242,13 +242,14 @@ public class ClientWindow implements ActionListener
 			// if a radio button is clicked, the event would be thrown to this class to handle
 			options[index].addActionListener(this);
 			options[index].setBounds(10, 110+(index*20), 350, 20);
+			options[index].setEnabled(false);
 			window.add(options[index]);
 			optionGroup.add(options[index]);
 		}
 
 		timer = new JLabel("TIMER");  // represents the countdown shown on the window
 		timer.setBounds(250, 250, 100, 20);
-		clock = new TimerCode(30);  // represents clocked task that should run after X seconds
+		clock = new TimerCode(15);  // represents clocked task that should run after X seconds
 		Timer t = new Timer();  // event generator
 		t.schedule(clock, 0, 1000); // clock is called every second
 		window.add(timer);
@@ -265,6 +266,7 @@ public class ClientWindow implements ActionListener
 
 		submit = new JButton("Submit");  // button to submit their answer
 		submit.setBounds(200, 300, 100, 20);
+		submit.setEnabled(false);
 		submit.addActionListener(this);  // calls actionPerformed of this class
 		window.add(submit);
 
@@ -492,6 +494,14 @@ public class ClientWindow implements ActionListener
 			{
 				timer.setText("Timer expired");
 				window.repaint();
+				timer.setText("Timer expired");
+				window.repaint();
+				poll.setEnabled(false);
+				submit.setEnabled(true);
+				options[0].setEnabled(true);
+				options[1].setEnabled(true);
+				options[2].setEnabled(true);
+				options[3].setEnabled(true);
 				this.cancel();  // cancel the timed task
 				return;
 				// you can enable/disable your buttons for poll/submit here as needed
