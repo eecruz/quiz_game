@@ -1,0 +1,120 @@
+Q1 What popular game was made using Java?  
+Cuphead
+Tetris
+Minecraft*
+Hollow Knight
+
+Q2 What's the output? int x = 7; x = x*2; System.out.println(x);
+7
+14*
+NumberFormatException
+None of the above
+ 
+Q3 Which of these isn't part of the protocol hiearchy?
+Transport Layer
+Transmission Layer*
+Physical Layer
+Network Layer
+
+Q4 What does FSM stand for?
+Finite Stae Machine
+Finite State Machine* 
+Finite Security Machine
+Fintie State Macine 
+
+Q5 What was Alan Turing NOT known for?
+The Turing Test
+Cracking the Enigma Code
+Pioneering Computer Science
+Developing the First Advance Programming Language*
+
+Q6 When it comes to BitTorrent, redunancy is...
+Good*
+Not Good
+Neither 
+Somewhere in between
+
+Q7 Which is a type of DNS record?
+NX 
+TXL
+A* 
+CN
+
+Q8 What does the "J" AJAX stand for?
+Javascript*
+Java
+Javaswing
+Jaiswal
+
+Q9 For a ConcurrentLinkedQueue, size() is a constant time operation.
+Depends on the elements inside it
+True
+False*
+Depends on the implementation of the Queue
+
+Q10 Which CDN does Netflix use?
+Google
+It's own unique one
+Akamai
+Limelight Networks*
+
+Q11 What is DNS Spoofing? 
+The DNS routing process fails randomly 
+Encrypted DNS becomes temprarily broken through
+A fake DNS error is displayed, blocking user access
+A fake IP address is received instead of a real IP address*
+
+
+Q12 How many "pillars" of OOP are there?
+6
+2
+5
+4*
+
+Q13 What is the key concept behind polymorphism in object-oriented programming?
+The ability to overload operators for different data types.
+The practice of hiding implementation details within a class
+The inheritance of properties and methods from parent classes
+The ability for objects of different classes to respond differently to the same message*
+
+Q14 Which HTTP request message uploads a new file (object) to the server?
+HEAD method
+PUT method*
+GET method
+POST method
+
+Q15 Which HTTTP response code matches the status "Moved Permanently"?
+301*
+505
+200
+404
+
+Q16 What kinds of data structures do large language models use?
+Hash Tables
+Graphs
+Trees
+All of the above*
+
+Q17 Which region corresponds to the "RIPE NCC" whois database?
+North America
+Asia Pacific
+Africa
+Europe/Central Asia/Middle East*
+
+Q18 When was IETF founded?
+1985
+1982
+1990
+1986*
+
+Q19 Who manages the root DNS domain?
+IETF
+IANA
+FBI
+ICANN*
+
+Q20 What is the resource record format?
+(name, type, value, ttl)
+(name, value, type, ttl)*
+(name, ttl, value, type)
+(name, type, ttl, value)
