@@ -1,5 +1,5 @@
 Q14 Which HTTP request message uploads a new file (object) to the server?
 HEAD method
-PUT method*
+PUT method
 GET method
 POST method

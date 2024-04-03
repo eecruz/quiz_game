@@ -2,4 +2,4 @@ Q16 What kinds of data structures do large language models use?
 Hash Tables
 Graphs
 Trees
-All of the above*
+All of the above

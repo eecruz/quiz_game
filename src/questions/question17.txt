@@ -2,4 +2,4 @@ Q17 Which region corresponds to the "RIPE NCC" WHOIS database?
 North America
 Asia Pacific
 Africa
-Europe/Central Asia/Middle East*
+Europe/Central Asia/Middle East

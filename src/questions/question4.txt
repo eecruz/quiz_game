@@ -1,0 +1,5 @@
+Q4 What does FSM stand for?
+Fast System Management
+Finite State Machine
+Fully Synchronized Module
+Functional System Monitor

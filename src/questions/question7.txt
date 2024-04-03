@@ -1,5 +1,5 @@
 Q7 Which is a type of DNS record?
-NX 
+NX
 TXL
-A* 
+A
 CN

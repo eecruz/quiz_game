@@ -1,5 +1,0 @@
-Q4 What does FSM stand for? --------------EDIT-------------------
-Finite State Machine
-Finite State Machine* 
-Finite Security Machine
-Finite State Machine 
