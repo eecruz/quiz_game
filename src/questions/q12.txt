@@ -1,0 +1,5 @@
+Q12 How many "pillars" of OOP are there?
+6
+2
+5
+4*

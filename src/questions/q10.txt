@@ -1,0 +1,5 @@
+Q10 Which CDN does Netflix use?
+Google
+It's own unique one
+Akamai
+Limelight Networks*

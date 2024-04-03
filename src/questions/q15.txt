@@ -1,0 +1,5 @@
+Q15 Which HTTTP response code matches the status "Moved Permanently"?
+301*
+505
+200
+404

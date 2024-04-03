@@ -1,0 +1,20 @@
+Minecraft
+14
+Transmission Layer
+Finite State Machine
+Developing the First Advance Programming Language
+Good
+A
+Javascript
+False
+Limelight Networks
+A fake IP address is received instead of a real IP address
+4
+The ability for objects of different classes to respond differently to the same message
+PUT method
+301
+All of the above
+Europe/Central Asia/Middle East
+1986
+ICANN
+(name, value, type, ttl)
