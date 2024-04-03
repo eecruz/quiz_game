@@ -164,7 +164,7 @@ public class Server
 
 		// Continue execution on the main thread
 		System.out.println("Finished");
-		System.exit(1);
+		System.exit(0);
 	}
 }
 

@@ -258,8 +258,8 @@ public class ClientWindow implements ActionListener
 		window.add(submit);
 
 		// Read and display questions from server
-		while (true)
-		{
+//		while (true)
+//		{
 			Object input;
 			
 			try
@@ -274,6 +274,7 @@ public class ClientWindow implements ActionListener
 					// Process the file
 					if (input instanceof File) 
 					{
+						System.out.println("INPUT: " + input.toString());
 						String[] questionInfo = new String[5];
 						File tempFile = (File) input;
 						Scanner scanner = new Scanner (new FileInputStream(tempFile));
@@ -313,8 +314,13 @@ public class ClientWindow implements ActionListener
 				// Client closed before receiving question
 				// Do nothing
 			}
+			
+			// If server stops running
+			JOptionPane.showMessageDialog(window, "Lost connection to server. Exiting game...", 
+					"Connection Terminated", JOptionPane.PLAIN_MESSAGE);
+			System.exit(0);
 		}
-	}
+//	}
 
 	// Validate the IP address format
 	private static boolean isValidIPAddress(String ipAddress) 
