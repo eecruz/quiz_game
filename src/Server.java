@@ -33,7 +33,7 @@ public class Server
 			// Create a socket for TCP communication
 			serverSocket = new ServerSocket(portNumber);
 			
-			// Create a DatagramSocket to listen for incoming UDP packets on port 9876
+			// Create a DatagramSocket to listen for incoming UDP packets
 			dgSocket = new DatagramSocket(portNumber);
 		}
 		
@@ -399,7 +399,6 @@ class TCPThread extends Thread
 	}
 }
 
-
 // Thread to handle incoming UDP packets
 class UDPThread extends Thread 
 {
@@ -407,7 +406,7 @@ class UDPThread extends Thread
 	private ConcurrentLinkedQueue<Integer> clientPolls;
 
 	// Constructor to initialize the socket
-	public UDPThread(DatagramSocket socket) 
+	public UDPThread(DatagramSocket socket)
 	{
 		this.socket = socket;
 		clientPolls = new ConcurrentLinkedQueue<Integer>();
@@ -467,7 +466,7 @@ class UDPThread extends Thread
 	}
 
 	@Override
-	public void run() 
+	public void run()
 	{
 		try 
 		{

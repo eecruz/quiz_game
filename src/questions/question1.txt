@@ -1,5 +1,5 @@
 Q1 What popular game was made using Java?  
 Cuphead
 Tetris
-Minecraft*
+Minecraft
 Hollow Knight

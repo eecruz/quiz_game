@@ -1,5 +1,5 @@
 Q3 Which of these isn't part of the protocol hierarchy?
 Transport Layer
-Transmission Layer*
+Transmission Layer
 Physical Layer
 Network Layer

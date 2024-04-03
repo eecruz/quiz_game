@@ -2,4 +2,4 @@ Q13 What is the key concept behind polymorphism in object-oriented programming?
 The ability to overload operators for different data types.
 The practice of hiding implementation details within a class
 The inheritance of properties and methods from parent classes
-The ability for objects of different classes to respond differently to the same message*
+The ability for objects of different classes to respond differently to the same message

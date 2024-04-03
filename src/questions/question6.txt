@@ -1,5 +1,5 @@
 Q6 When it comes to BitTorrent, redundancy is...
-Good*
+Good
 Not Good
 Neither 
 Somewhere in between
