@@ -228,7 +228,7 @@ public class ClientWindow implements ActionListener
 
 		// Label for alerting client of missing answer
 		alertLabel = new JLabel();
-		alertLabel.setBounds(10, 325, 300, 20);
+		alertLabel.setBounds(10, 325, 350, 20);
 		alertLabel.setVisible(false);
 		window.add(alertLabel);
 		
@@ -284,13 +284,33 @@ public class ClientWindow implements ActionListener
 			// While socket is still open
 			while ((input = reader.readObject()) != null) 
 			{
-				if (input instanceof String && input.equals("next")) 
+				if (input instanceof String) 
 				{
-					// TODO Restart timer, reset variables, etc
+					// Ready client for next question
+					if (input.equals("next"));
+					{
+						// TODO Restart timer, reset variables, etc
+					}
+					
+					// This client was the first to poll
+					if (input.equals("ack"))
+					{
+						alertLabel.setForeground(Color.BLACK);
+						alertLabel.setText("You had the fastest poll! Answer before the timer runs out!");
+						alertLabel.setVisible(true);
+						toggleButtons();
+					}
+					
+					// This client was late in polling
+					if(input.equals("negative-ack"))
+					{
+						alertLabel.setText("You were late polling! Better luck on the next question...");
+						alertLabel.setVisible(true);
+					}
 				}
 
-				// Process the file
-				if (input instanceof File) 
+				// Process the file and display question
+				else if (input instanceof File) 
 				{
 					System.out.println("RECEIVED QUESTION FROM SERVER");
 					String[] questionInfo = new String[5];
@@ -603,7 +623,6 @@ public class ClientWindow implements ActionListener
 				timer.setText("Timer expired");
 				window.repaint();
 				poll.setEnabled(false);
-				toggleButtons();
 				// Signal polling complete to server
 				writeToServerUDP(-1);
 				this.cancel();  // cancel the timed task

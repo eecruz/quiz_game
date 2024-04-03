@@ -154,11 +154,12 @@ public class Server
 	        	// Do nothing
 	        }
 	        
-	        int first = udpThread.getFirstPoll();
+	        int ackClientID = udpThread.getFirstPoll();
 	        
 	        System.out.println("POLLING COMPLETE");
-	        System.out.println("CLIENT TO ANSWER: " + first);
+	        System.out.println("CLIENT TO ANSWER: " + ackClientID);
 	        
+	        tcpThread.ackClients(ackClientID);
 			
 			try 
 			{
@@ -310,6 +311,20 @@ class TCPThread extends Thread
 		for(ClientThread client : clientThreads)
 		{
 			client.writeFileToClient(file);
+		}
+	}
+	
+	public void ackClients(int ackClientID)
+	{
+		for (ClientThread client : clientThreads)
+		{
+			// Alert client with the fastest poll that they can answer
+			if (client.getClientID() == ackClientID)
+				client.writeStringToClient("ack");
+			
+			// Alert other clients that they were late in polling
+			else
+				client.writeStringToClient("negative-ack");
 		}
 	}
 
