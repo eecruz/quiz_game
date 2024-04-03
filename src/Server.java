@@ -421,6 +421,7 @@ class UDPThread extends Thread
 		return isComplete;
 	}
 	
+	// Print contents of queue
 	public void printQueue()
 	{
 		System.out.println("QUEUE: ");
