@@ -251,11 +251,11 @@ public class ClientWindow implements ActionListener
 			optionGroup.add(options[index]);
 		}
 		
-		userAnswer = null;
+		userAnswer = "";
 
 		timer = new JLabel("TIMER");  // represents the countdown shown on the window
 		timer.setBounds(250, 250, 100, 20);
-		clock = new TimerCode(15);  // represents clocked task that should run after X seconds
+		clock = new TimerCode(3, false);  // represents clocked task that should run after X seconds
 		Timer t = new Timer();  // event generator
 		t.schedule(clock, 0, 1000); // clock is called every second
 		window.add(timer);
@@ -299,9 +299,8 @@ public class ClientWindow implements ActionListener
 						alertLabel.setText("You had the fastest poll! Answer before the timer runs out!");
 						alertLabel.setVisible(true);
 						toggleButtons();
-						clock = new TimerCode(10);  // represents clocked task that should run after X seconds
-						Timer t2 = new Timer();  // event generator
-						t2.schedule(clock, 0, 1000); // clock is called every second
+						clock = new TimerCode(10, true);  // represents clocked task that should run after X seconds
+						t.schedule(clock, 0, 1000); // clock is called every second
 
 					}
 					
@@ -457,19 +456,18 @@ public class ClientWindow implements ActionListener
 	// this method is called when you press either of the buttons- submit/poll
 	@Override
 	public void actionPerformed(ActionEvent e)
-	{
-		System.out.println("You clicked " + e.getActionCommand());
-		
+	{		
+		// User clicks poll
 		if (e.getSource().equals(poll))
 		{
 			// Send clientID to the server
 			writeToServerUDP(clientID);
 		}
 		
-		// Submit user answer to server
+		// Submit user answer to server if they click submit
 		else if (e.getSource().equals(submit))
 		{			
-			// Obtain selected answer as string and alert user
+			// Obtain selected answer as string and alert user of submission
 			if (options[0].isSelected())
 			{
 				userAnswer = options[0].getText();
@@ -614,21 +612,44 @@ public class ClientWindow implements ActionListener
 	// this class is responsible for running the timer on the window
 	public class TimerCode extends TimerTask
 	{
-		private int duration;  // write setters and getters as you need
-		public TimerCode(int duration)
+		// Length of timer
+		private int duration;
+
+		// Indicates whether this timer is for polling or answering
+		private Boolean isAnswering;
+		
+		public TimerCode(int duration, Boolean isAnswering)
 		{
 			this.duration = duration;
+			this.isAnswering = isAnswering;
 		}
 		@Override
 		public void run()
 		{
 			if(duration < 0)
 			{
-				timer.setText("Timer expired");
+				if(isAnswering)
+				{
+					// Client submitted answer
+					if (!userAnswer.equals(""))
+						writeToServerTCP(userAnswer);
+					
+					// Client did not submit answer in time
+					else
+						writeToServerTCP("no answer");
+					
+					// Reset userAnswer for next question
+					userAnswer = "";
+				}
+					
+				
+				timer.setText("Times up!");
 				window.repaint();
 				poll.setEnabled(false);
+				
 				// Signal polling complete to server
 				writeToServerUDP(-1);
+				
 				this.cancel();  // cancel the timed task
 				return;
 				// you can enable/disable your buttons for poll/submit here as needed
