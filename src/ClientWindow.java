@@ -9,6 +9,7 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -42,6 +43,8 @@ public class ClientWindow implements ActionListener
 	private ButtonGroup optionGroup;
 
 	// Labels
+	private JLabel alertLabel;
+	private JLabel waitingLabel;
 	private JLabel question;
 	private JLabel timer;
 	private JLabel score;
@@ -50,6 +53,7 @@ public class ClientWindow implements ActionListener
 	private TimerTask clock;	
 	private JFrame window;
 	private int clientID;
+	private String userAnswer;
 
 	private static SecureRandom random = new SecureRandom();
 
@@ -145,10 +149,20 @@ public class ClientWindow implements ActionListener
 			clientID = reader.readInt();
 			System.out.println("ClientID: " + clientID);
 		}
-		catch (Exception e) 
+
+		// Connection could not be established
+		catch(ConnectException e)
 		{
-			System.err.println("Couldn't get I/O for the connection");
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(window, "Couldn't connect to server. Please ensure "
+					+ "IP address and port number are correct.", "Can't Find Server", JOptionPane.ERROR_MESSAGE);
+			System.exit(0);
+		} 
+		
+		// I/O errors
+		catch (IOException e) 
+		{
+			JOptionPane.showMessageDialog(window, "An unexpected error occured. Please try again later.", 
+					"Error", JOptionPane.ERROR_MESSAGE);
 			System.exit(0);
 		}
 
@@ -167,15 +181,13 @@ public class ClientWindow implements ActionListener
 			e.printStackTrace();
 		}
 
-
-
 		// Game window
 		window = new GameFrame();
 
 		// Create temporary screen before game starts
-		JLabel waitingLabel = new JLabel("Waiting for game to start...");
+		waitingLabel = new JLabel("Waiting for game to start...");
 		window.add(waitingLabel);
-		waitingLabel.setBounds(10, 5, 350, 100);
+		waitingLabel.setBounds(10, 5, 350, 20);
 
 		// Wait for server to start game
 		try 
@@ -191,10 +203,7 @@ public class ClientWindow implements ActionListener
 				// Wait for next question from server
 				input = reader.readObject();
 				if(input instanceof String && ((String)input).equals("next"))
-				{
 					waitingLabel.setVisible(false);
-					readQuestion();
-				}
 			}
 
 			// Server starts game
@@ -217,12 +226,20 @@ public class ClientWindow implements ActionListener
 			// Do nothing
 		}
 
+		// Label for alerting client of missing answer
+		alertLabel = new JLabel();
+		alertLabel.setBounds(10, 325, 300, 20);
+		alertLabel.setVisible(false);
+		window.add(alertLabel);
+		
 		question = new JLabel(); // represents the question
 		window.add(question);
 		question.setBounds(10, 5, 350, 100);  
 
+		// Option radio buttons
 		options = new JRadioButton[4];
 		optionGroup = new ButtonGroup();
+		
 		for(int index=0; index<options.length; index++)
 		{
 			options[index] = new JRadioButton("Option " + (index+1));  // represents an option
@@ -233,10 +250,12 @@ public class ClientWindow implements ActionListener
 			window.add(options[index]);
 			optionGroup.add(options[index]);
 		}
+		
+		userAnswer = null;
 
 		timer = new JLabel("TIMER");  // represents the countdown shown on the window
 		timer.setBounds(250, 250, 100, 20);
-		clock = new TimerCode(15);  // represents clocked task that should run after X seconds
+		clock = new TimerCode(2);  // represents clocked task that should run after X seconds
 		Timer t = new Timer();  // event generator
 		t.schedule(clock, 0, 1000); // clock is called every second
 		window.add(timer);
@@ -257,70 +276,74 @@ public class ClientWindow implements ActionListener
 		submit.addActionListener(this);  // calls actionPerformed of this class
 		window.add(submit);
 
-		// Read and display questions from server
-//		while (true)
-//		{
-			Object input;
-			
-			try
+		Object input;
+		
+		// Continually read and display questions from server
+		try
+		{
+			// While socket is still open
+			while ((input = reader.readObject()) != null) 
 			{
-				while ((input = reader.readObject()) != null) 
+				if (input instanceof String && input.equals("next")) 
 				{
-					if (input instanceof String && input.equals("next")) 
-						break;
+					// TODO Restart timer, reset variables, etc
+				}
 
+				// Process the file
+				if (input instanceof File) 
+				{
 					System.out.println("RECEIVED QUESTION FROM SERVER");
+					String[] questionInfo = new String[5];
+					File tempFile = (File) input;
+					Scanner scanner = new Scanner (new FileInputStream(tempFile));
+					int index = 0;
 
-					// Process the file
-					if (input instanceof File) 
+					// Read values from file
+					while (scanner.hasNext() && index < 5)
 					{
-						System.out.println("INPUT: " + input.toString());
-						String[] questionInfo = new String[5];
-						File tempFile = (File) input;
-						Scanner scanner = new Scanner (new FileInputStream(tempFile));
-						int index = 0;
+						questionInfo[index] = scanner.nextLine();
+						index++;
+					}
 
-						// Read values from file
-						while (scanner.hasNext() && index < 5)
-						{
-							questionInfo[index] = scanner.nextLine();
-							index++;
-						}
-						
-						// Display questions and answers from file
-						question.setText(questionInfo[0]);
-						for (int i = 0; i <= 3; i++)
-						{
-							options[i].setText(questionInfo[i + 1]);
-						}
+					// Display questions and answers from file
+					question.setText(questionInfo[0]);
+					for (int i = 0; i <= 3; i++)
+					{
+						options[i].setText(questionInfo[i + 1]);
 					}
 				}
 			}
-			
-			catch (ClassNotFoundException e) 
-			{
-				System.err.println("ERROR loading question: ClassNotFound");
-				e.printStackTrace();
-			} 
-			
-			catch (FileNotFoundException e) 
-			{
-				System.err.println("ERROR loading question: FileNotFound");
-				e.printStackTrace();
-			} 
-			
-			catch (IOException e) 
-			{
-				// Client closed before receiving question
-				// Do nothing
-			}
-			
-			// If server stops running
-			JOptionPane.showMessageDialog(window, "Lost connection to server. Exiting game...", 
-					"Connection Terminated", JOptionPane.PLAIN_MESSAGE);
-			System.exit(0);
 		}
-//	}
+
+		catch (ClassNotFoundException e) 
+		{
+			System.err.println("ERROR loading question: ClassNotFound");
+			e.printStackTrace();
+		} 
+
+		catch (FileNotFoundException e) 
+		{
+			System.err.println("ERROR loading question: FileNotFound");
+			e.printStackTrace();
+		} 
+
+		catch (IOException e) 
+		{
+			// Client closed before receiving question
+			// Do nothing
+		}
+
+		// If server stops running
+		// Stop timer
+		clock.cancel();
+		
+		// Show alert to user
+		JOptionPane.showMessageDialog(window, "Lost connection to server. Exiting game...", 
+				"Connection Terminated", JOptionPane.PLAIN_MESSAGE);
+		
+		// Exit game
+		System.exit(0);
+	}
 
 	// Validate the IP address format
 	private static boolean isValidIPAddress(String ipAddress) 
@@ -350,10 +373,60 @@ public class ClientWindow implements ActionListener
 		else
 			return false;
 	}
-
-	private void readQuestion() 
+	
+	// Toggle submit and option buttons enabled/disabled
+	public void toggleButtons()
 	{
+		for (JRadioButton button : options)
+		{
+			button.setEnabled(!button.isEnabled());
+		}
 		
+		submit.setEnabled(!submit.isEnabled());
+	}
+	
+	// Write string to server using TCP
+	public void writeToServerTCP(String str) 
+	{
+		try 
+		{
+			// Send kill request on close
+			writer.writeObject(str);
+			writer.flush();
+		} 
+		
+		catch (IOException e1) 
+		{
+			System.err.println("ERROR writing " + str + " to server");
+			e1.printStackTrace();
+		}
+	}
+	
+	// Write an integer to the server using UDP
+	public void writeToServerUDP(int x)
+	{
+		try 
+		{
+			// Convert integer to string
+			String xString = String.valueOf(x);
+			
+			// Convert string to byte array
+			byte[] sendData = xString.getBytes();
+
+			// Create a DatagramPacket to send the clientID data to the server
+			DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, portNumber);
+
+			// Send packet to the server
+			udpSocket.send(sendPacket);
+			
+			if(x == clientID)
+				System.out.println("Sent buzz to server");
+		} 
+		catch (Exception e2) 
+		{
+			System.err.println("Error sending UDP packet");
+			e2.printStackTrace();
+		}
 	}
 
 	// this method is called when you check/uncheck any radio button
@@ -365,40 +438,56 @@ public class ClientWindow implements ActionListener
 		
 		if (e.getSource().equals(poll))
 		{
-			try 
-			{
-				// Send clientID to the server
-				String id = String.valueOf(clientID);
-				byte[] sendData = id.getBytes();
-
-				// Create a DatagramPacket to send the clientID data to the server
-				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, portNumber);
-
-				// Send packet to the server
-				udpSocket.send(sendPacket);
-				System.out.println("Sent buzz to server");
-			} 
-			catch (Exception e2) 
-			{
-				System.err.println("Error sending UDP packet");
-				e2.printStackTrace();
-			}
+			// Send clientID to the server
+			writeToServerUDP(clientID);
 		}
 		
+		// Submit user answer to server
 		else if (e.getSource().equals(submit))
-		{
-			String userAnswer = null;
-			
+		{			
+			// Obtain selected answer as string and alert user
 			if (options[0].isSelected())
+			{
 				userAnswer = options[0].getText();
+				alertLabel.setForeground(Color.BLACK);
+				alertLabel.setText("Submitted: Option 1");
+				alertLabel.setVisible(true);
+				toggleButtons();
+			}
+			
 			else if (options[1].isSelected())
+			{
 				userAnswer = options[1].getText();
+				alertLabel.setForeground(Color.BLACK);
+				alertLabel.setText("Submitted: Option 2");
+				alertLabel.setVisible(true);
+				toggleButtons();
+			}
+			
 			else if (options[2].isSelected())
+			{
 				userAnswer = options[2].getText();
+				alertLabel.setForeground(Color.BLACK);
+				alertLabel.setText("Submitted: Option 3");
+				alertLabel.setVisible(true);
+				toggleButtons();
+			}
+			
 			else if (options[3].isSelected())
+			{
 				userAnswer = options[3].getText();
-			else
-				{/*no answer*/}
+				alertLabel.setForeground(Color.BLACK);
+				alertLabel.setText("Submitted: Option 4");
+				alertLabel.setVisible(true);
+				toggleButtons();
+			}
+			
+			else // No answer provided
+			{
+				alertLabel.setForeground(Color.RED);
+				alertLabel.setText("*Please select an answer before you submit!*");
+				alertLabel.setVisible(true);
+			}
 			
 			System.out.println("Submitted: " + userAnswer);
 		}
@@ -480,17 +569,8 @@ public class ClientWindow implements ActionListener
 				{
 					System.out.println("Closing client connection...");
 
-					try 
-					{
-						// Send kill request on close
-						writer.writeObject("kill");
-						writer.flush();
-					} 
-					catch (IOException e1) 
-					{
-						System.err.println("ERROR terminating connection");
-						e1.printStackTrace();
-					} 
+					// Send kill request on close
+					writeToServerTCP("kill");
 
 					System.out.println("Game closed");
 					System.exit(0);
@@ -522,23 +602,19 @@ public class ClientWindow implements ActionListener
 			{
 				timer.setText("Timer expired");
 				window.repaint();
-				timer.setText("Timer expired");
-				window.repaint();
 				poll.setEnabled(false);
-				submit.setEnabled(true);
-				options[0].setEnabled(true);
-				options[1].setEnabled(true);
-				options[2].setEnabled(true);
-				options[3].setEnabled(true);
+				toggleButtons();
+				// Signal polling complete to server
+				writeToServerUDP(-1);
 				this.cancel();  // cancel the timed task
 				return;
 				// you can enable/disable your buttons for poll/submit here as needed
 			}
 
-			if(duration < 6)
-				timer.setForeground(Color.red);
+			if(duration <= 5)
+				timer.setForeground(Color.RED);
 			else
-				timer.setForeground(Color.black);
+				timer.setForeground(Color.BLACK);
 
 			timer.setText("TIME: " + duration);
 			duration--;

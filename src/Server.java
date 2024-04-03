@@ -20,18 +20,34 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Server 
 {
-	public static void main(String[] args) throws IOException 
+	public static void main(String[] args)
 	{
 		int portNumber = 3849;
 
-		ServerSocket serverSocket = new ServerSocket(portNumber);
-
+		// Sockets
+		ServerSocket serverSocket = null;
+		DatagramSocket dgSocket = null;
+		
+		try 
+		{
+			// Create a socket for TCP communication
+			serverSocket = new ServerSocket(portNumber);
+			
+			// Create a DatagramSocket to listen for incoming UDP packets on port 9876
+			dgSocket = new DatagramSocket(portNumber);
+		}
+		
+		catch (Exception e) 
+		{
+			System.err.println("ERROR while initializing sockets");
+			e.printStackTrace();
+		}
+		
 		// Threads
 		RunThread runThread = new RunThread();
 		TCPThread tcpThread = new TCPThread(serverSocket);
-		Thread udpThread;
-
-		DatagramSocket dgSocket;
+		UDPThread udpThread = new UDPThread(dgSocket);
+		udpThread.start();
 
 		try 
 		{
@@ -43,21 +59,6 @@ public class Server
 
 			// Start waiting for "start" command
 			runThread.start();
-
-			try 
-			{
-				// Create a DatagramSocket to listen for incoming UDP packets on port 9876
-				dgSocket = new DatagramSocket(3849);
-
-				// Create a thread to handle incoming packets
-				udpThread = new Thread(new UDPThread(dgSocket));
-				udpThread.start(); // Start the receiver thread
-			} 
-			catch (Exception e) 
-			{
-				System.err.println("ERROR INITIALZING UDP SOCKET");
-				e.printStackTrace();
-			}
 
 			// Accept connections from clients before game starts
 			while (!runThread.isRunCommandReceived())
@@ -145,6 +146,19 @@ public class Server
 				// Write question file to all clients
 				tcpThread.writeFileToAllClients(tempFile.toFile());
 	        }
+	        
+	        // Wait for polling to complete
+	        Boolean pollingComplete;
+	        while(pollingComplete = !udpThread.isPollingComplete())
+	        {
+	        	// Do nothing
+	        }
+	        
+	        int first = udpThread.getFirstPoll();
+	        
+	        System.out.println("POLLING COMPLETE");
+	        System.out.println("CLIENT TO ANSWER: " + first);
+	        
 			
 			try 
 			{
@@ -226,7 +240,7 @@ class RunThread extends Thread
 	}
 }
 
-// Thread for mid-game client connections
+// Thread for mid-game client connections and terminating clients
 class TCPThread extends Thread 
 {
 	// Clients
@@ -352,11 +366,14 @@ class TCPThread extends Thread
 
 				// Increment clientID
 				clientID++;
-			} 
+			}
+			
+			// Prevent blocking if client requests kill
 			catch (SocketTimeoutException e) 
 			{
 				continue;
 			} 
+			
 			catch (IOException e) 
 			{
 				System.err.println("ERROR handling client acceptances");
@@ -369,7 +386,7 @@ class TCPThread extends Thread
 
 
 // Thread to handle incoming UDP packets
-class UDPThread implements Runnable 
+class UDPThread extends Thread 
 {
 	private DatagramSocket socket;
 	private ConcurrentLinkedQueue<Integer> clientPolls;
@@ -379,6 +396,58 @@ class UDPThread implements Runnable
 	{
 		this.socket = socket;
 		clientPolls = new ConcurrentLinkedQueue<Integer>();
+	}
+	
+	// Indicate whether polling has completed
+	public boolean isPollingComplete()
+	{
+		Boolean isComplete = clientPolls.contains(-1);
+		
+		// Remove all -1s from queue
+		if (isComplete)
+		{
+			System.out.print("INITAL ");
+			printQueue();
+			
+			ArrayList<Integer> temp = new ArrayList<>();
+			temp.add(-1);
+			
+			clientPolls.removeAll(temp);
+			
+			System.out.print("FINAL ");
+			printQueue();
+		}
+		
+		return isComplete;
+	}
+	
+	public void printQueue()
+	{
+		System.out.println("QUEUE: ");
+		for(int i = 0; i < clientPolls.size(); i++)
+		{
+			Object[] array = clientPolls.toArray();
+			
+			if(i != clientPolls.size() - 1 && clientPolls.size() > 1)
+				System.out.print(array[i].toString() + ", ");
+			
+			else
+				System.out.println(array[i].toString());
+		}
+	}
+	
+	// Return first client that polled and clear queue
+	public int getFirstPoll()
+	{	
+		// -1 signals to server that no clients polled
+		int first = -1;
+		
+		// If at least 1 client polls
+		if (clientPolls.size() > 0)
+			first = clientPolls.poll();
+		
+		clientPolls.clear();
+		return first;
 	}
 
 	@Override
@@ -400,22 +469,13 @@ class UDPThread implements Runnable
 				// Convert the received data to a string (then to an integer)
 				String receivedID = new String(receivePacket.getData()).trim();
 				int id = Integer.valueOf(receivedID);
-				System.out.println("Received buzz from Client " + id);
-
-				// Add client's buzz to queue
-				clientPolls.add(Integer.valueOf(id));
 				
-				System.out.println("QUEUE: ");
-				for(int i = 0; i < clientPolls.size(); i++)
-				{
-					Object[] array = clientPolls.toArray();
-					
-					if(i != clientPolls.size() - 1)
-						System.out.print(array[i].toString() + ", ");
-					
-					else
-						System.out.println(array[i].toString());
-				}
+				// If data represents a buzz from a client
+				if (id >= 0)
+					System.out.println("Received buzz from Client " + id);
+				
+				// Add data to queue
+				clientPolls.add(Integer.valueOf(id));
 				
 
 //				// Get the client's address and port from the received packet
