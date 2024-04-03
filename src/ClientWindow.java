@@ -255,7 +255,7 @@ public class ClientWindow implements ActionListener
 
 		timer = new JLabel("TIMER");  // represents the countdown shown on the window
 		timer.setBounds(250, 250, 100, 20);
-		clock = new TimerCode(2);  // represents clocked task that should run after X seconds
+		clock = new TimerCode(15);  // represents clocked task that should run after X seconds
 		Timer t = new Timer();  // event generator
 		t.schedule(clock, 0, 1000); // clock is called every second
 		window.add(timer);
@@ -299,6 +299,10 @@ public class ClientWindow implements ActionListener
 						alertLabel.setText("You had the fastest poll! Answer before the timer runs out!");
 						alertLabel.setVisible(true);
 						toggleButtons();
+						clock = new TimerCode(10);  // represents clocked task that should run after X seconds
+						Timer t2 = new Timer();  // event generator
+						t2.schedule(clock, 0, 1000); // clock is called every second
+
 					}
 					
 					// This client was late in polling
