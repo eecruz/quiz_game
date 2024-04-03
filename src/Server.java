@@ -456,6 +456,7 @@ class UDPThread extends Thread
 	{
 		try 
 		{
+			// Byte array to specify length of incoming packets
 			byte[] receiveData = new byte[1024];
 
 			// Infinite loop to continuously listen for incoming packets
