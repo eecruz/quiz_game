@@ -10,17 +10,17 @@ Q2 What's the output? int x = 7; x = x*2; System.out.println(x);
 NumberFormatException
 None of the above
  
-Q3 Which of these isn't part of the protocol hiearchy?
+Q3 Which of these isn't part of the protocol hierarchy?
 Transport Layer
 Transmission Layer*
 Physical Layer
 Network Layer
 
-Q4 What does FSM stand for?
-Finite Stae Machine
+Q4 What does FSM stand for? --------------EDIT-------------------
+Finite State Machine
 Finite State Machine* 
 Finite Security Machine
-Fintie State Macine 
+Finite State Machine 
 
 Q5 What was Alan Turing NOT known for?
 The Turing Test
@@ -28,7 +28,7 @@ Cracking the Enigma Code
 Pioneering Computer Science
 Developing the First Advance Programming Language*
 
-Q6 When it comes to BitTorrent, redunancy is...
+Q6 When it comes to BitTorrent, redundancy is...
 Good*
 Not Good
 Neither 
@@ -60,7 +60,7 @@ Limelight Networks*
 
 Q11 What is DNS Spoofing? 
 The DNS routing process fails randomly 
-Encrypted DNS becomes temprarily broken through
+Encrypted DNS becomes temporarily broken through
 A fake DNS error is displayed, blocking user access
 A fake IP address is received instead of a real IP address*
 
@@ -95,7 +95,7 @@ Graphs
 Trees
 All of the above*
 
-Q17 Which region corresponds to the "RIPE NCC" whois database?
+Q17 Which region corresponds to the "RIPE NCC" WHOIS database?
 North America
 Asia Pacific
 Africa
