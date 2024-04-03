@@ -1,0 +1,5 @@
+Q19 Who manages the root DNS domain?
+IETF
+IANA
+FBI
+ICANN*

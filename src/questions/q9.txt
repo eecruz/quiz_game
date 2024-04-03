@@ -1,0 +1,5 @@
+Q9 For a ConcurrentLinkedQueue, size() is a constant time operation.
+Depends on the elements inside it
+True
+False*
+Depends on the implementation of the Queue

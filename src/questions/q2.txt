@@ -1,0 +1,5 @@
+Q2 What's the output? int x = 7; x = x*2; System.out.println(x);
+7
+14*
+NumberFormatException
+None of the above
