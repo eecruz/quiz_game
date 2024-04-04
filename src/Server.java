@@ -206,8 +206,11 @@ public class Server
 	        	Thread.sleep(0);
 	        }
 	        
-	        System.out.println("CLIENT CORRECT: " + tcpThread.isClientAnswerCorrect(ackClientID, answerKey[1]));
+	        // Get status of client's answer (e.g. correct, incorrect)
+	        String answerStatus = tcpThread.isClientAnswerCorrect(ackClientID, answerKey[1]);
 			
+	        // Inform clients of answer status
+	        tcpThread.informClientsOfStatus(answerStatus, ackClientID);
 	        
 			try 
 			{
@@ -402,7 +405,7 @@ class TCPThread extends Thread
 	}
 	
 	// Obtain and check answer from client who won polling, returns whether they answered correctly
-	public Boolean isClientAnswerCorrect(int clientID, String correctAnswer)
+	public String isClientAnswerCorrect(int clientID, String correctAnswer)
 	{
 		String answer = null;
 		
@@ -413,7 +416,32 @@ class TCPThread extends Thread
 				answer = client.getClientAnswer();
 		}
 		
-		return (answer.equals(correctAnswer));
+		// Client answered correctly
+		if(answer.equals(correctAnswer))
+			return "correct";
+		
+		// Client did not answer
+		else if(answer.equals("no answer"))
+			return "penalty";
+		
+		// Client answered incorrectly
+		else
+			return "incorrect";
+	}
+	
+	// Tell each client whether the question was answered correctly
+	public void informClientsOfStatus(String status, int ackClientID)
+	{
+		for (ClientThread client : clientThreads)
+		{
+			// Inform answering client whether they answered correctly
+			if(client.getClientID() == ackClientID)
+				client.writeStringToClient(status);
+			
+			// Inform other clients whether the question was answered correctly and who answered it
+			else
+				client.writeStringToClient("alt_" + status + ackClientID);
+		}
 	}
 	
 	// Set the value for whether the client's answer was received

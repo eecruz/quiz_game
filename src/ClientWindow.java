@@ -255,7 +255,7 @@ public class ClientWindow implements ActionListener
 
 		timer = new JLabel("TIMER");  // represents the countdown shown on the window
 		timer.setBounds(250, 250, 100, 20);
-		clock = new TimerCode(3, false);  // represents clocked task that should run after X seconds
+		clock = new TimerCode(3, true, null);  // represents clocked task that should run after X seconds
 		Timer t = new Timer();  // event generator
 		t.schedule(clock, 0, 1000); // clock is called every second
 		window.add(timer);
@@ -286,37 +286,106 @@ public class ClientWindow implements ActionListener
 			{
 				if(input instanceof String) 
 				{
+					// Cast input to a string
+					String inputString = (String) input;
+					
 					// Ready client for next question
-					if(input.equals("next"));
+					if(inputString.equals("next"));
 					{
 						// TODO Restart timer, reset variables, etc
 					}
 					
 					// This client was the first to poll
-					if(input.equals("ack"))
+					if(inputString.equals("ack"))
 					{
 						alertLabel.setForeground(new Color(54, 102, 0)); // Dark green
 						alertLabel.setText("You had the fastest poll! Answer before the timer runs out!");
 						alertLabel.setVisible(true);
 						toggleButtons();
-						clock = new TimerCode(10, true);  // represents clocked task that should run after X seconds
+						clock = new TimerCode(10, false, true);  // represents clocked task that should run after X seconds
 						t.schedule(clock, 0, 1000); // clock is called every second
 
 					}
 					
 					// This client was late in polling
-					if(input.equals("negative-ack"))
+					if(inputString.equals("negative-ack"))
 					{
 						alertLabel.setForeground(Color.RED);
 						alertLabel.setText("You were late polling! Better luck on the next question...");
 						alertLabel.setVisible(true);
+						clock = new TimerCode(10, false, false);  // represents clocked task that should run after X seconds
+						t.schedule(clock, 0, 1000); // clock is called every second
 					}
 					
 					// No clients polled
-					if(input.equals("no-poll"))
+					if(inputString.equals("no-poll"))
 					{
 						alertLabel.setForeground(Color.BLACK);
 						alertLabel.setText("No players polled this round! On to the next question...");
+						alertLabel.setVisible(true);
+					}
+					
+					// This client answered correctly
+					if(inputString.equals("correct"))
+					{
+						// TODO Increase score
+						alertLabel.setForeground(new Color(54, 102, 0)); // Dark green
+						alertLabel.setText("You answered correctly! Keep it up!");
+						alertLabel.setVisible(true);
+					}
+					
+					// This client answered incorrectly
+					if(inputString.equals("incorrect"))
+					{
+						// TODO Decrease score
+						alertLabel.setForeground(Color.RED);
+						alertLabel.setText("You answered wrong! Get your head in the game!");
+						alertLabel.setVisible(true);
+					}
+					
+					// This client polled but didn't answer
+					if(inputString.equals("penalty"))
+					{
+						// TODO Decrease score
+						alertLabel.setForeground(Color.RED);
+						alertLabel.setText("You didn't submit anything! Did you even know the answer?");
+						alertLabel.setVisible(true);
+						toggleButtons();
+					}
+					
+					// Answering client (not this client) answered correctly
+					if(inputString.contains("alt_correct"))
+					{
+						// Get ID of client who attempted to answer question
+						int ackClientID = Integer.parseInt(inputString.replaceAll("[^0-9]", ""));
+						
+						// Update alert label
+						alertLabel.setForeground(Color.BLUE);
+						alertLabel.setText("Client " + ackClientID + " answered correctly! You need to catch up!");
+						alertLabel.setVisible(true);
+					}
+					
+					// Answering client (not this one) answered incorrectly
+					if(inputString.contains("alt_incorrect"))
+					{
+						// Get ID of client who attempted to answer question
+						int ackClientID = Integer.parseInt(inputString.replaceAll("[^0-9]", ""));
+						
+						// Update alert label
+						alertLabel.setForeground(Color.BLUE);
+						alertLabel.setText("Client " + ackClientID + " answered wrong! Definitely a skill issue...");
+						alertLabel.setVisible(true);
+					}
+					
+					// Answering client (not this one) polled but did not answer
+					if(inputString.contains("alt_penalty"))
+					{
+						// Get ID of client who attempted to answer question
+						int ackClientID = Integer.parseInt(inputString.replaceAll("[^0-9]", ""));
+						
+						// Update alert label
+						alertLabel.setForeground(Color.BLUE);
+						alertLabel.setText("Client " + ackClientID + " didn't answer! Why did they even poll? -_-");
 						alertLabel.setVisible(true);
 					}
 				}
@@ -625,19 +694,25 @@ public class ClientWindow implements ActionListener
 		private int duration;
 
 		// Indicates whether this timer is for polling or answering
-		private Boolean isAnswering;
+		private Boolean isPolling;
 		
-		public TimerCode(int duration, Boolean isAnswering)
+		// Indicates whether this client had the fastest poll
+		private Boolean fastestPoll;
+		
+		public TimerCode(int duration, Boolean isPolling, Boolean fastestPoll)
 		{
 			this.duration = duration;
-			this.isAnswering = isAnswering;
+			this.isPolling = isPolling;
+			this.fastestPoll = fastestPoll;
 		}
+		
 		@Override
 		public void run()
 		{
-			if(duration < 0)
+			if(duration <= 0)
 			{
-				if(isAnswering)
+				// Timer is for answering
+				if(!isPolling && fastestPoll)
 				{
 					// Client submitted answer
 					if(!userAnswer.equals(""))
@@ -650,18 +725,21 @@ public class ClientWindow implements ActionListener
 					// Reset userAnswer for next question
 					userAnswer = "";
 				}
-					
+				
+				// Timer is for polling
+				else
+				{
+					// Signal polling complete to server
+					writeToServerUDP(-1);
+				}
 				
 				timer.setText("Times up!");
 				window.repaint();
 				poll.setEnabled(false);
-				
-				// Signal polling complete to server
-				writeToServerUDP(-1);
-				
-				this.cancel();  // cancel the timed task
+					
+				// Cancel the timed task
+				this.cancel();  
 				return;
-				// you can enable/disable your buttons for poll/submit here as needed
 			}
 
 			if(duration <= 5)
