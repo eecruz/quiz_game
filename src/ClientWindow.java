@@ -290,7 +290,10 @@ public class ClientWindow implements ActionListener
 			{
 				// Process the file and display question
 				if(input instanceof File) 
-				{
+				{					
+					// Clear radio button selections
+					this.optionGroup.clearSelection();
+					
 					String[] questionInfo = new String[5];
 					File tempFile = (File) input;
 					Scanner scanner = new Scanner (new FileInputStream(tempFile));
@@ -584,6 +587,7 @@ public class ClientWindow implements ActionListener
 				alertLabel.setForeground(Color.BLACK);
 				alertLabel.setText("Submitted: Option 1");
 				alertLabel.setVisible(true);
+				options[0].setSelected(false);
 				toggleButtons();
 			}
 			
@@ -593,6 +597,7 @@ public class ClientWindow implements ActionListener
 				alertLabel.setForeground(Color.BLACK);
 				alertLabel.setText("Submitted: Option 2");
 				alertLabel.setVisible(true);
+				options[1].setSelected(false);
 				toggleButtons();
 			}
 			
@@ -602,6 +607,8 @@ public class ClientWindow implements ActionListener
 				alertLabel.setForeground(Color.BLACK);
 				alertLabel.setText("Submitted: Option 3");
 				alertLabel.setVisible(true);
+				options[2].setSelected(false);
+
 				toggleButtons();
 			}
 			
@@ -611,6 +618,8 @@ public class ClientWindow implements ActionListener
 				alertLabel.setForeground(Color.BLACK);
 				alertLabel.setText("Submitted: Option 4");
 				alertLabel.setVisible(true);
+				options[3].setSelected(false);
+
 				toggleButtons();
 			}
 			
@@ -680,7 +689,7 @@ public class ClientWindow implements ActionListener
 			if(duration < 0)
 			{
 				// Timer is for answering
-				if(!isPolling && fastestPoll)
+				if(!isPolling && fastestPoll && userAnswer != null)
 				{
 					// Client submitted answer
 					if(!userAnswer.equals(""))
@@ -699,6 +708,13 @@ public class ClientWindow implements ActionListener
 				{
 					// Signal polling complete to server
 					writeToServerUDP(-1);
+				}
+				
+				// Avoid error in transmission
+				if(userAnswer == null)
+				{
+					writeToServerTCP("no answer");
+					userAnswer = "";
 				}
 				
 				timer.setText("Times up!");
