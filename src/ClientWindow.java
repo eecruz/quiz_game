@@ -205,7 +205,10 @@ public class ClientWindow implements ActionListener
 				while((input = reader.readObject()) instanceof String)
 				{
 					if(input.equals("next"))
+					{
 						waitingLabel.setVisible(false);
+						break;
+					}					
 				}	
 			}
 
@@ -258,7 +261,7 @@ public class ClientWindow implements ActionListener
 
 		timer = new JLabel("TIMER");  // represents the countdown shown on the window
 		timer.setBounds(250, 250, 100, 20);
-		clock = new TimerCode(3, true, null);  // represents clocked task that should run after X seconds
+		clock = new TimerCode(15, true, null);  // represents clocked task that should run after X seconds
 		Timer t = new Timer();  // event generator
 		t.schedule(clock, 0, 1000); // clock is called every second
 		window.add(timer);
@@ -287,20 +290,45 @@ public class ClientWindow implements ActionListener
 			// While socket is still open
 			while((input = reader.readObject()) != null) 
 			{
-				if(input instanceof String)
-				{					
-					System.out.println("RECEIVED: " + input + " FROM SERVER");
-					
+				// Process the file and display question
+				if(input instanceof File) 
+				{
+					String[] questionInfo = new String[5];
+					File tempFile = (File) input;
+					Scanner scanner = new Scanner (new FileInputStream(tempFile));
+					int index = 0;
+
+					// Read values from file
+					while(scanner.hasNext() && index < questionInfo.length)
+					{
+						questionInfo[index] = scanner.nextLine().trim();
+						index++;
+					}
+
+					// Display questions and answers from file
+					question.setText(questionInfo[0]);
+					for (int i = 0; i <= 3; i++)
+					{
+						options[i].setText(questionInfo[i + 1]);
+					}
+
+					System.out.println("QUESTION INFO:");
+					for(String str : questionInfo)
+						System.out.println(str);
+
+					clock = new TimerCode(15, true, null);
+					t.schedule(clock, 0, 1000); // clock is called every second
+				}
+				
+				else if(input instanceof String)
+				{										
 					// Ready client for next question
 					if(((String)input).equals("next"))
 					{
-						// TODO Restart timer, reset variables, etc
 						poll.setEnabled(true);
-						clock = new TimerCode(3, true, null);
-						t.schedule(clock, 0, 1000); // clock is called every second
 						alertLabel.setVisible(false);
 					}
-					
+
 					// This client was the first to poll
 					else if(input.equals("ack"))
 					{
@@ -401,37 +429,20 @@ public class ClientWindow implements ActionListener
 						alertLabel.setVisible(true);
 					}
 					
-					// Game has finished
+					// Game has finished (this client did not win)
 					else if(input.equals("end"))
 					{
-						// TODO Show final score to client in below line
 						JOptionPane.showMessageDialog(window, "Game has finished! You scored: " + score,
 								"Game Finished", JOptionPane.PLAIN_MESSAGE);
 						System.exit(0);
 					}
-				}
-
-				// Process the file and display question
-				else if(input instanceof File) 
-				{
-					System.out.println("RECEIVED QUESTION FROM SERVER");
-					String[] questionInfo = new String[5];
-					File tempFile = (File) input;
-					Scanner scanner = new Scanner (new FileInputStream(tempFile));
-					int index = 0;
-
-					// Read values from file
-					while(scanner.hasNext() && index < questionInfo.length)
+					
+					// Game has finished (this client won)
+					else if(input.equals("win"))
 					{
-						questionInfo[index] = scanner.nextLine().trim();
-						index++;
-					}
-
-					// Display questions and answers from file
-					question.setText(questionInfo[0]);
-					for (int i = 0; i <= 3; i++)
-					{
-						options[i].setText(questionInfo[i + 1]);
+						JOptionPane.showMessageDialog(window, "You won! You scored: " + score,
+								"Winner!!!", JOptionPane.PLAIN_MESSAGE);
+						System.exit(0);
 					}
 				}
 			}
@@ -502,6 +513,7 @@ public class ClientWindow implements ActionListener
 		for (JRadioButton button : options)
 		{
 			button.setEnabled(!button.isEnabled());
+			button.setSelected(false);
 		}
 		
 		submit.setEnabled(!submit.isEnabled());
@@ -531,14 +543,12 @@ public class ClientWindow implements ActionListener
 		{
 			String xString;
 			
-			// Convert integer to string (dealing with weird transmission error)
+			// Convert integer to string (deals with weird transmission error)
 			if(0 < x && x < 10)
 				xString = "0" + String.valueOf(x);
 			else
 				xString = String.valueOf(x);
-			
-			System.out.println("String value of ID: " + xString);
-			
+						
 			// Convert string to byte array
 			byte[] sendData = xString.getBytes();
 
@@ -547,10 +557,7 @@ public class ClientWindow implements ActionListener
 
 			// Send packet to the server
 			udpSocket.send(sendPacket);
-			
-			System.out.println("String value of packet: " + (new String(sendPacket.getData()).trim()));
-
-			
+						
 			if(x == clientID)
 				System.out.println("Sent buzz to server");
 		} 
@@ -619,8 +626,6 @@ public class ClientWindow implements ActionListener
 				alertLabel.setText("*Please select an answer before you submit!*");
 				alertLabel.setVisible(true);
 			}
-			
-			System.out.println("Submitted: " + userAnswer);
 		}
 		
 //		// input refers to the radio button you selected or button you clicked
@@ -777,7 +782,8 @@ public class ClientWindow implements ActionListener
 				timer.setForeground(Color.RED);
 			else
 				timer.setForeground(Color.BLACK);
-
+			
+			// Update timer label
 			timer.setText("TIME: " + duration);
 			duration--;
 			window.repaint();
