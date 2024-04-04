@@ -47,15 +47,14 @@ public class ClientWindow implements ActionListener
 	private JLabel waitingLabel;
 	private JLabel question;
 	private JLabel timer;
-	private JLabel score;
+	private JLabel scoreLabel;
 
 	// Other
 	private TimerTask clock;	
 	private JFrame window;
 	private int clientID;
 	private String userAnswer;
-
-	private static SecureRandom random = new SecureRandom();
+	private int score;
 
 	// write setters and getters as you need
 
@@ -201,9 +200,14 @@ public class ClientWindow implements ActionListener
 				waitingLabel.setText("Game in progress. Please wait for next question...");
 
 				// Wait for next question from server
-				input = reader.readObject();
-				if(input instanceof String && input.equals("next"))
-					waitingLabel.setVisible(false);
+				while((input = reader.readObject()) instanceof String)
+				{
+					if(input.equals("next"))
+					{
+						waitingLabel.setVisible(false);
+						break;
+					}					
+				}	
 			}
 
 			// Server starts game
@@ -255,15 +259,15 @@ public class ClientWindow implements ActionListener
 
 		timer = new JLabel("TIMER");  // represents the countdown shown on the window
 		timer.setBounds(250, 250, 100, 20);
-		clock = new TimerCode(3, true, null);  // represents clocked task that should run after X seconds
+		clock = new TimerCode(15, true, null);  // represents clocked task that should run after X seconds
 		Timer t = new Timer();  // event generator
 		t.schedule(clock, 0, 1000); // clock is called every second
 		window.add(timer);
 
 
-		score = new JLabel("SCORE"); // represents the score
-		score.setBounds(50, 250, 100, 20);
-		window.add(score);
+		scoreLabel = new JLabel("SCORE: " + score); // represents the score
+		scoreLabel.setBounds(50, 250, 100, 20);
+		window.add(scoreLabel);
 
 		poll = new JButton("Poll");  // button that use clicks/ like a buzzer
 		poll.setBounds(10, 300, 100, 20);
@@ -284,131 +288,9 @@ public class ClientWindow implements ActionListener
 			// While socket is still open
 			while((input = reader.readObject()) != null) 
 			{
-				if(input instanceof String)
-				{
-					// Cast input to a string
-					String inputString = (String) input;
-					System.out.println("INPUT: " + inputString);
-					
-					// This client was the first to poll
-					if(inputString.equals("ack"))
-					{
-						alertLabel.setForeground(new Color(54, 102, 0)); // Dark green
-						alertLabel.setText("You had the fastest poll! Answer before the timer runs out!");
-						alertLabel.setVisible(true);
-						toggleButtons();
-						clock = new TimerCode(10, false, true);  // represents clocked task that should run after X seconds
-						t.schedule(clock, 0, 1000); // clock is called every second
-
-					}
-					
-					// This client was late in polling
-					else if(inputString.equals("negative-ack"))
-					{
-						alertLabel.setForeground(Color.RED);
-						alertLabel.setText("You were late polling! Better luck on the next question...");
-						alertLabel.setVisible(true);
-						clock = new TimerCode(10, false, false);  // represents clocked task that should run after X seconds
-						t.schedule(clock, 0, 1000); // clock is called every second
-					}
-					
-					// No clients polled
-					else if(inputString.equals("no-poll"))
-					{
-						System.out.println("RECEIVED NO POLL: " + inputString);
-						alertLabel.setForeground(Color.BLACK);
-						alertLabel.setText("No players polled this round! On to the next question...");
-						alertLabel.setVisible(true);
-					}
-					
-					// This client answered correctly
-					else if(inputString.equals("correct"))
-					{
-						// TODO Increase score
-						alertLabel.setForeground(new Color(54, 102, 0)); // Dark green
-						alertLabel.setText("You answered correctly! Keep it up!");
-						alertLabel.setVisible(true);
-					}
-					
-					// This client answered incorrectly
-					else if(inputString.equals("incorrect"))
-					{
-						// TODO Decrease score
-						alertLabel.setForeground(Color.RED);
-						alertLabel.setText("You answered wrong! Get your head in the game!");
-						alertLabel.setVisible(true);
-					}
-					
-					// This client polled but didn't answer
-					else if(inputString.equals("penalty"))
-					{
-						// TODO Decrease score
-						alertLabel.setForeground(Color.RED);
-						alertLabel.setText("You didn't submit anything! Did you even know the answer?");
-						alertLabel.setVisible(true);
-						toggleButtons();
-					}
-					
-					// Answering client (not this client) answered correctly
-					else if(inputString.contains("alt_correct"))
-					{
-						// Get ID of client who attempted to answer question
-						int ackClientID = Integer.parseInt(inputString.replaceAll("[^0-9]", ""));
-						
-						// Update alert label
-						alertLabel.setForeground(Color.BLUE);
-						alertLabel.setText("Client " + ackClientID + " answered correctly! You need to catch up!");
-						alertLabel.setVisible(true);
-					}
-					
-					// Answering client (not this one) answered incorrectly
-					else if(inputString.contains("alt_incorrect"))
-					{
-						// Get ID of client who attempted to answer question
-						int ackClientID = Integer.parseInt(inputString.replaceAll("[^0-9]", ""));
-						
-						// Update alert label
-						alertLabel.setForeground(Color.BLUE);
-						alertLabel.setText("Client " + ackClientID + " answered wrong! Definitely a skill issue...");
-						alertLabel.setVisible(true);
-					}
-					
-					// Answering client (not this one) polled but did not answer
-					else if(inputString.contains("alt_penalty"))
-					{
-						// Get ID of client who attempted to answer question
-						int ackClientID = Integer.parseInt(inputString.replaceAll("[^0-9]", ""));
-						
-						// Update alert label
-						alertLabel.setForeground(Color.BLUE);
-						alertLabel.setText("Client " + ackClientID + " didn't answer! Why did they even poll? -_-");
-						alertLabel.setVisible(true);
-					}
-					
-					// Ready client for next question
-					else if(inputString == "next")
-					{
-						System.out.println("RECEIVED NEXT FROM SERVER: " + inputString);
-						// TODO Restart timer, reset variables, etc
-						poll.setEnabled(true);
-						clock = new TimerCode(3, true, null);
-						alertLabel.setVisible(false);
-					}
-					
-					// Game has finished
-					else if(inputString.equals("end"))
-					{
-						// TODO Show final score to client in below line
-						JOptionPane.showMessageDialog(window, "Game has finished! You scored: ",
-								"Game Finished", JOptionPane.PLAIN_MESSAGE);
-						System.exit(0);
-					}
-				}
-
 				// Process the file and display question
-				else if(input instanceof File) 
+				if(input instanceof File) 
 				{
-					System.out.println("RECEIVED QUESTION FROM SERVER");
 					String[] questionInfo = new String[5];
 					File tempFile = (File) input;
 					Scanner scanner = new Scanner (new FileInputStream(tempFile));
@@ -426,6 +308,135 @@ public class ClientWindow implements ActionListener
 					for (int i = 0; i <= 3; i++)
 					{
 						options[i].setText(questionInfo[i + 1]);
+					}
+
+					clock = new TimerCode(15, true, null);
+					t.schedule(clock, 0, 1000); // clock is called every second
+				}
+				
+				else if(input instanceof String)
+				{										
+					// Ready client for next question
+					if(((String)input).equals("next"))
+					{
+						poll.setEnabled(true);
+						alertLabel.setVisible(false);
+					}
+
+					// This client was the first to poll
+					else if(input.equals("ack"))
+					{
+						alertLabel.setForeground(new Color(54, 102, 0)); // Dark green
+						alertLabel.setText("You had the fastest poll! Answer before the timer runs out!");
+						alertLabel.setVisible(true);
+						toggleButtons();
+						clock = new TimerCode(10, false, true);  // represents clocked task that should run after X seconds
+						t.schedule(clock, 0, 1000); // clock is called every second
+
+					}
+					
+					// This client was late in polling
+					else if(input.equals("negative-ack"))
+					{
+						alertLabel.setForeground(Color.RED);
+						alertLabel.setText("You were late polling! Better luck on the next question...");
+						alertLabel.setVisible(true);
+						clock = new TimerCode(10, false, false);  // represents clocked task that should run after X seconds
+						t.schedule(clock, 0, 1000); // clock is called every second
+					}
+					
+					// No clients polled
+					else if(input.equals("no-poll"))
+					{
+						alertLabel.setForeground(Color.BLACK);
+						alertLabel.setText("No players polled this round! On to the next question...");
+						alertLabel.setVisible(true);
+					}
+					
+					// This client answered correctly
+					else if(input.equals("correct"))
+					{
+						score += 10;
+						scoreLabel.setText("SCORE: " + score);
+						scoreLabel.repaint();
+						alertLabel.setForeground(new Color(54, 102, 0)); // Dark green
+						alertLabel.setText("You answered correctly! Keep it up!");
+						alertLabel.setVisible(true);
+					}
+					
+					// This client answered incorrectly
+					else if(input.equals("incorrect"))
+					{
+						score -= 10;
+						scoreLabel.setText("SCORE: " + score);
+						scoreLabel.repaint();
+						alertLabel.setForeground(Color.RED);
+						alertLabel.setText("You answered wrong! Get your head in the game!");
+						alertLabel.setVisible(true);
+					}
+					
+					// This client polled but didn't answer
+					else if(input.equals("penalty"))
+					{
+						score -= 20;
+						scoreLabel.setText("SCORE: " + score);
+						scoreLabel.repaint();
+						alertLabel.setForeground(Color.RED);
+						alertLabel.setText("You didn't submit anything! Did you even know the answer?");
+						alertLabel.setVisible(true);
+						toggleButtons();
+					}
+					
+					// Answering client (not this client) answered correctly
+					else if(((String)input).contains("alt_correct"))
+					{
+						// Get ID of client who attempted to answer question
+						int ackClientID = Integer.parseInt(((String)input).replaceAll("[^0-9]", ""));
+						
+						// Update alert label
+						alertLabel.setForeground(Color.BLUE);
+						alertLabel.setText("Client " + ackClientID + " answered correctly! You need to catch up!");
+						alertLabel.setVisible(true);
+					}
+					
+					// Answering client (not this one) answered incorrectly
+					else if(((String)input).contains("alt_incorrect"))
+					{
+						// Get ID of client who attempted to answer question
+						int ackClientID = Integer.parseInt(((String)input).replaceAll("[^0-9]", ""));
+						
+						// Update alert label
+						alertLabel.setForeground(Color.BLUE);
+						alertLabel.setText("Client " + ackClientID + " answered wrong! Definitely a skill issue...");
+						alertLabel.setVisible(true);
+					}
+					
+					// Answering client (not this one) polled but did not answer
+					else if(((String)input).contains("alt_penalty"))
+					{
+						// Get ID of client who attempted to answer question
+						int ackClientID = Integer.parseInt(((String)input).replaceAll("[^0-9]", ""));
+						
+						// Update alert label
+						alertLabel.setForeground(Color.BLUE);
+						alertLabel.setText("Client " + ackClientID + " didn't answer! Why did they even poll? -_-");
+						alertLabel.setVisible(true);
+					}
+					
+					// Game has finished (this client did not win)
+					else if(input.equals("end"))
+					{
+						JOptionPane.showMessageDialog(window, "Game has finished! You scored: " + score,
+								"Game Finished", JOptionPane.PLAIN_MESSAGE);
+						System.exit(0);
+					}
+					
+					// Game has finished (this client won)
+					else if(input.equals("win"))
+					{
+						JOptionPane.showMessageDialog(window, "You won! You scored: " + score,
+								"Winner!!!", JOptionPane.PLAIN_MESSAGE);
+						System.exit(0);
 					}
 				}
 			}
@@ -496,6 +507,7 @@ public class ClientWindow implements ActionListener
 		for (JRadioButton button : options)
 		{
 			button.setEnabled(!button.isEnabled());
+			button.setSelected(false);
 		}
 		
 		submit.setEnabled(!submit.isEnabled());
@@ -523,9 +535,14 @@ public class ClientWindow implements ActionListener
 	{
 		try 
 		{
-			// Convert integer to string
-			String xString = String.valueOf(x);
+			String xString;
 			
+			// Convert integer to string (deals with weird transmission error)
+			if(0 < x && x < 10)
+				xString = "0" + String.valueOf(x);
+			else
+				xString = String.valueOf(x);
+						
 			// Convert string to byte array
 			byte[] sendData = xString.getBytes();
 
@@ -534,7 +551,7 @@ public class ClientWindow implements ActionListener
 
 			// Send packet to the server
 			udpSocket.send(sendPacket);
-			
+						
 			if(x == clientID)
 				System.out.println("Sent buzz to server");
 		} 
@@ -603,71 +620,7 @@ public class ClientWindow implements ActionListener
 				alertLabel.setText("*Please select an answer before you submit!*");
 				alertLabel.setVisible(true);
 			}
-			
-			System.out.println("Submitted: " + userAnswer);
 		}
-		
-//		// input refers to the radio button you selected or button you clicked
-//		String input = e.getActionCommand();  
-//		switch(input)
-//		{
-//		case "Option 1":	// Your code here
-//			break;
-//		case "Option 2":	// Your code here
-//			break;
-//		case "Option 3":	// Your code here
-//			break;
-//		case "Option 4":	// Your code here
-//			break;
-//		case "Poll":
-//			try 
-//			{
-//				// Send clientID to the server
-//				String id = String.valueOf(clientID);
-//				byte[] sendData = id.getBytes();
-//
-//				// Create a DatagramPacket to send the clientID data to the server
-//				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, portNumber);
-//
-//				// Send packet to the server
-//				udpSocket.send(sendPacket);
-//				System.out.println("Sent buzz to server");
-//			} 
-//			catch(Exception e2) 
-//			{
-//				System.err.println("Error sending UDP packet");
-//				e2.printStackTrace();
-//			}
-//
-//			break;
-//
-//		case "Submit":		// Your code here
-//			System.out.println("Submitted: " + optionGroup.getSelection().toString());
-//			break;
-//		default:
-//			System.out.println("Incorrect Option");
-//		}
-
-		// test code below to demo enable/disable components
-		// DELETE THE CODE BELOW FROM HERE***
-		//		if(poll.isEnabled())
-		//		{
-		//			poll.setEnabled(false);
-		//			submit.setEnabled(true);
-		//		}
-		//		else
-		//		{
-		//			poll.setEnabled(true);
-		//			submit.setEnabled(false);
-		//		}
-		//		
-		//		question.setText("Q2. This is another test problem " + random.nextInt());
-		//		
-		//		// you can also enable disable radio buttons
-		//		options[random.nextInt(4)].setEnabled(false);
-		//		options[random.nextInt(4)].setEnabled(true);
-		//		// TILL HERE ***
-
 	}
 
 	public class GameFrame extends JFrame 
@@ -724,7 +677,7 @@ public class ClientWindow implements ActionListener
 		@Override
 		public void run()
 		{
-			if(duration <= 0)
+			if(duration < 0)
 			{
 				// Timer is for answering
 				if(!isPolling && fastestPoll)
@@ -761,7 +714,8 @@ public class ClientWindow implements ActionListener
 				timer.setForeground(Color.RED);
 			else
 				timer.setForeground(Color.BLACK);
-
+			
+			// Update timer label
 			timer.setText("TIME: " + duration);
 			duration--;
 			window.repaint();
