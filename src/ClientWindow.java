@@ -56,8 +56,6 @@ public class ClientWindow implements ActionListener
 	private String userAnswer;
 	private int score;
 
-	private static SecureRandom random = new SecureRandom();
-
 	// write setters and getters as you need
 
 	public ClientWindow() throws FileNotFoundException
@@ -311,10 +309,6 @@ public class ClientWindow implements ActionListener
 					{
 						options[i].setText(questionInfo[i + 1]);
 					}
-
-					System.out.println("QUESTION INFO:");
-					for(String str : questionInfo)
-						System.out.println(str);
 
 					clock = new TimerCode(15, true, null);
 					t.schedule(clock, 0, 1000); // clock is called every second
@@ -627,68 +621,6 @@ public class ClientWindow implements ActionListener
 				alertLabel.setVisible(true);
 			}
 		}
-		
-//		// input refers to the radio button you selected or button you clicked
-//		String input = e.getActionCommand();  
-//		switch(input)
-//		{
-//		case "Option 1":	// Your code here
-//			break;
-//		case "Option 2":	// Your code here
-//			break;
-//		case "Option 3":	// Your code here
-//			break;
-//		case "Option 4":	// Your code here
-//			break;
-//		case "Poll":
-//			try 
-//			{
-//				// Send clientID to the server
-//				String id = String.valueOf(clientID);
-//				byte[] sendData = id.getBytes();
-//
-//				// Create a DatagramPacket to send the clientID data to the server
-//				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, portNumber);
-//
-//				// Send packet to the server
-//				udpSocket.send(sendPacket);
-//				System.out.println("Sent buzz to server");
-//			} 
-//			catch(Exception e2) 
-//			{
-//				System.err.println("Error sending UDP packet");
-//				e2.printStackTrace();
-//			}
-//
-//			break;
-//
-//		case "Submit":		// Your code here
-//			System.out.println("Submitted: " + optionGroup.getSelection().toString());
-//			break;
-//		default:
-//			System.out.println("Incorrect Option");
-//		}
-
-		// test code below to demo enable/disable components
-		// DELETE THE CODE BELOW FROM HERE***
-		//		if(poll.isEnabled())
-		//		{
-		//			poll.setEnabled(false);
-		//			submit.setEnabled(true);
-		//		}
-		//		else
-		//		{
-		//			poll.setEnabled(true);
-		//			submit.setEnabled(false);
-		//		}
-		//		
-		//		question.setText("Q2. This is another test problem " + random.nextInt());
-		//		
-		//		// you can also enable disable radio buttons
-		//		options[random.nextInt(4)].setEnabled(false);
-		//		options[random.nextInt(4)].setEnabled(true);
-		//		// TILL HERE ***
-
 	}
 
 	public class GameFrame extends JFrame 
