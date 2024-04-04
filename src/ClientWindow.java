@@ -69,14 +69,14 @@ public class ClientWindow implements ActionListener
 		clientID = -1;
 
 		// Prevent user from continuing without providing valid host IP address
-		while (true) 
+		while(true) 
 		{
 			// Capture input IP from user
 			hostIP = JOptionPane.showInputDialog(window, "Please enter the IP address of the host machine (server):", 
 					"Trivia Game", JOptionPane.PLAIN_MESSAGE);
 
 			// Trim spaces from input
-			if (hostIP != null)
+			if(hostIP != null)
 				hostIP = hostIP.trim();
 
 			// User clicked the "Cancel" button, close the entire application
@@ -84,13 +84,13 @@ public class ClientWindow implements ActionListener
 				System.exit(0);
 
 			// Valid IP address provided, break out of the loop
-			if (isValidIPAddress(hostIP))
+			if(isValidIPAddress(hostIP))
 			{
 				try 
 				{
 					serverAddress = InetAddress.getByName(hostIP);
 				} 
-				catch (UnknownHostException e) 
+				catch(UnknownHostException e) 
 				{
 					System.err.println("Can't determine host IP address");
 					e.printStackTrace();
@@ -106,14 +106,14 @@ public class ClientWindow implements ActionListener
 		System.out.println("Valid IP address entered: " + hostIP);
 
 		// Prevent user from continuing without providing valid port number
-		while (true) 
+		while(true) 
 		{
 			// Capture input port number from user
 			String port = JOptionPane.showInputDialog(window, 
 					"Please enter the port number used by the host machine (server):", "Trivia Game", JOptionPane.PLAIN_MESSAGE);
 
 			// Trim spaces from input
-			if (port != null)
+			if(port != null)
 				port = port.trim();
 
 			// User clicked the "Cancel" button, close the entire application
@@ -121,7 +121,7 @@ public class ClientWindow implements ActionListener
 				System.exit(0);
 
 			// Valid port number provided, break out of the loop
-			if (isValidPortNumber(port))
+			if(isValidPortNumber(port))
 			{
 				portNumber = Integer.valueOf(port);
 				break;
@@ -159,7 +159,7 @@ public class ClientWindow implements ActionListener
 		} 
 		
 		// I/O errors
-		catch (IOException e) 
+		catch(IOException e) 
 		{
 			JOptionPane.showMessageDialog(window, "An unexpected error occured. Please try again later.", 
 					"Error", JOptionPane.ERROR_MESSAGE);
@@ -175,7 +175,7 @@ public class ClientWindow implements ActionListener
 			// Get the IP address of the server
 			serverAddress = InetAddress.getByName(hostIP);
 		} 
-		catch (Exception e) 
+		catch(Exception e) 
 		{
 			System.err.println("Error establishing UDP connection");
 			e.printStackTrace();
@@ -195,33 +195,33 @@ public class ClientWindow implements ActionListener
 			Object input = reader.readObject();
 
 			// Game is already in progress
-			if(input instanceof String && ((String)input).equals("wait"))
+			if(input instanceof String && input.equals("wait"))
 			{
 				System.out.println("Game in progress. Waiting for next question...");
 				waitingLabel.setText("Game in progress. Please wait for next question...");
 
 				// Wait for next question from server
 				input = reader.readObject();
-				if(input instanceof String && ((String)input).equals("next"))
+				if(input instanceof String && input.equals("next"))
 					waitingLabel.setVisible(false);
 			}
 
 			// Server starts game
-			else if(input instanceof String && ((String)input).equals("start"))
+			else if(input instanceof String && input.equals("start"))
 			{
 				System.out.println("Starting game...");
 				waitingLabel.setVisible(false);
 			}
 		} 
 
-		catch (ClassNotFoundException e) 
+		catch(ClassNotFoundException e) 
 		{
 			System.err.println("ERROR starting game: ClassNotFound");
 			e.printStackTrace();
 		} 
 
 		// Client closed before game started
-		catch (IOException e) 
+		catch(IOException e) 
 		{
 			// Do nothing
 		}
@@ -282,20 +282,20 @@ public class ClientWindow implements ActionListener
 		try
 		{
 			// While socket is still open
-			while ((input = reader.readObject()) != null) 
+			while((input = reader.readObject()) != null) 
 			{
-				if (input instanceof String) 
+				if(input instanceof String) 
 				{
 					// Ready client for next question
-					if (input.equals("next"));
+					if(input.equals("next"));
 					{
 						// TODO Restart timer, reset variables, etc
 					}
 					
 					// This client was the first to poll
-					if (input.equals("ack"))
+					if(input.equals("ack"))
 					{
-						alertLabel.setForeground(Color.BLACK);
+						alertLabel.setForeground(new Color(54, 102, 0)); // Dark green
 						alertLabel.setText("You had the fastest poll! Answer before the timer runs out!");
 						alertLabel.setVisible(true);
 						toggleButtons();
@@ -307,13 +307,22 @@ public class ClientWindow implements ActionListener
 					// This client was late in polling
 					if(input.equals("negative-ack"))
 					{
+						alertLabel.setForeground(Color.RED);
 						alertLabel.setText("You were late polling! Better luck on the next question...");
+						alertLabel.setVisible(true);
+					}
+					
+					// No clients polled
+					if(input.equals("no-poll"))
+					{
+						alertLabel.setForeground(Color.BLACK);
+						alertLabel.setText("No players polled this round! On to the next question...");
 						alertLabel.setVisible(true);
 					}
 				}
 
 				// Process the file and display question
-				else if (input instanceof File) 
+				else if(input instanceof File) 
 				{
 					System.out.println("RECEIVED QUESTION FROM SERVER");
 					String[] questionInfo = new String[5];
@@ -322,9 +331,9 @@ public class ClientWindow implements ActionListener
 					int index = 0;
 
 					// Read values from file
-					while (scanner.hasNext() && index < 5)
+					while(scanner.hasNext() && index < questionInfo.length)
 					{
-						questionInfo[index] = scanner.nextLine();
+						questionInfo[index] = scanner.nextLine().trim();
 						index++;
 					}
 
@@ -338,19 +347,19 @@ public class ClientWindow implements ActionListener
 			}
 		}
 
-		catch (ClassNotFoundException e) 
+		catch(ClassNotFoundException e) 
 		{
 			System.err.println("ERROR loading question: ClassNotFound");
 			e.printStackTrace();
 		} 
 
-		catch (FileNotFoundException e) 
+		catch(FileNotFoundException e) 
 		{
 			System.err.println("ERROR loading question: FileNotFound");
 			e.printStackTrace();
 		} 
 
-		catch (IOException e) 
+		catch(IOException e) 
 		{
 			// Client closed before receiving question
 			// Do nothing
@@ -418,7 +427,7 @@ public class ClientWindow implements ActionListener
 			writer.flush();
 		} 
 		
-		catch (IOException e1) 
+		catch(IOException e1) 
 		{
 			System.err.println("ERROR writing " + str + " to server");
 			e1.printStackTrace();
@@ -445,7 +454,7 @@ public class ClientWindow implements ActionListener
 			if(x == clientID)
 				System.out.println("Sent buzz to server");
 		} 
-		catch (Exception e2) 
+		catch(Exception e2) 
 		{
 			System.err.println("Error sending UDP packet");
 			e2.printStackTrace();
@@ -458,17 +467,17 @@ public class ClientWindow implements ActionListener
 	public void actionPerformed(ActionEvent e)
 	{		
 		// User clicks poll
-		if (e.getSource().equals(poll))
+		if(e.getSource().equals(poll))
 		{
 			// Send clientID to the server
 			writeToServerUDP(clientID);
 		}
 		
 		// Submit user answer to server if they click submit
-		else if (e.getSource().equals(submit))
+		else if(e.getSource().equals(submit))
 		{			
 			// Obtain selected answer as string and alert user of submission
-			if (options[0].isSelected())
+			if(options[0].isSelected())
 			{
 				userAnswer = options[0].getText();
 				alertLabel.setForeground(Color.BLACK);
@@ -477,7 +486,7 @@ public class ClientWindow implements ActionListener
 				toggleButtons();
 			}
 			
-			else if (options[1].isSelected())
+			else if(options[1].isSelected())
 			{
 				userAnswer = options[1].getText();
 				alertLabel.setForeground(Color.BLACK);
@@ -486,7 +495,7 @@ public class ClientWindow implements ActionListener
 				toggleButtons();
 			}
 			
-			else if (options[2].isSelected())
+			else if(options[2].isSelected())
 			{
 				userAnswer = options[2].getText();
 				alertLabel.setForeground(Color.BLACK);
@@ -495,7 +504,7 @@ public class ClientWindow implements ActionListener
 				toggleButtons();
 			}
 			
-			else if (options[3].isSelected())
+			else if(options[3].isSelected())
 			{
 				userAnswer = options[3].getText();
 				alertLabel.setForeground(Color.BLACK);
@@ -540,7 +549,7 @@ public class ClientWindow implements ActionListener
 //				udpSocket.send(sendPacket);
 //				System.out.println("Sent buzz to server");
 //			} 
-//			catch (Exception e2) 
+//			catch(Exception e2) 
 //			{
 //				System.err.println("Error sending UDP packet");
 //				e2.printStackTrace();
@@ -631,7 +640,7 @@ public class ClientWindow implements ActionListener
 				if(isAnswering)
 				{
 					// Client submitted answer
-					if (!userAnswer.equals(""))
+					if(!userAnswer.equals(""))
 						writeToServerTCP(userAnswer);
 					
 					// Client did not submit answer in time

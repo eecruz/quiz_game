@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -23,7 +24,7 @@ public class Server
 	public static void main(String[] args)
 	{
 		int portNumber = 3849;
-
+		
 		// Sockets
 		ServerSocket serverSocket = null;
 		DatagramSocket dgSocket = null;
@@ -37,7 +38,7 @@ public class Server
 			dgSocket = new DatagramSocket(portNumber);
 		}
 		
-		catch (Exception e) 
+		catch(Exception e) 
 		{
 			System.err.println("ERROR while initializing sockets");
 			e.printStackTrace();
@@ -48,6 +49,34 @@ public class Server
 		TCPThread tcpThread = new TCPThread(serverSocket);
 		UDPThread udpThread = new UDPThread(dgSocket);
 		udpThread.start();
+
+		// Create answer key for questions (index 0 is empty so answers match with question number)
+		String[] answerKey = new String[21];
+
+		// Obtain answers from text file
+		try 
+		{
+			File keyFile = new File("questions/answer_key.txt");
+			Scanner scanner = new Scanner (new FileInputStream(keyFile));
+			
+			int index = 1;
+
+			// Read values from file
+			while(scanner.hasNext() && index < answerKey.length)
+			{
+				answerKey[index] = scanner.nextLine().trim();
+				index++;
+			}
+			
+			scanner.close();
+		} 
+		
+		catch (FileNotFoundException e) 
+		{
+			System.err.println("ERROR initalizing answer key");
+			e.printStackTrace();
+		}
+		
 
 		try 
 		{
@@ -61,16 +90,16 @@ public class Server
 			runThread.start();
 
 			// Accept connections from clients before game starts
-			while (!runThread.isRunCommandReceived())
+			while(!runThread.isRunCommandReceived())
 			{
 				try 
 				{					
 					// Safely remove closed sockets
 					Iterator<Socket> socketIterator = tcpThread.getClientSockets().iterator();
-					while (socketIterator.hasNext()) 
+					while(socketIterator.hasNext()) 
 					{
 					    Socket socket = socketIterator.next();
-					    if (socket.isClosed()) 
+					    if(socket.isClosed()) 
 					    {
 					        System.out.println("Client disconnected... Removing socket...");
 					        socketIterator.remove(); // Safe removal
@@ -79,10 +108,10 @@ public class Server
 
 					// Safely remove killed clients
 					Iterator<ClientThread> clientThreadIterator = tcpThread.getClientThreads().iterator();
-					while (clientThreadIterator.hasNext()) 
+					while(clientThreadIterator.hasNext()) 
 					{
 					    ClientThread client = clientThreadIterator.next();
-					    if (client.isKilled()) 
+					    if(client.isKilled()) 
 					    {
 					        System.out.println("Removing thread for client " + client.getClientID() + "...");
 					        clientThreadIterator.remove(); // Safe removal
@@ -109,12 +138,12 @@ public class Server
 					// Increment clientID
 					clientID++;
 				} 
-				catch (SocketTimeoutException e) 
+				catch(SocketTimeoutException e) 
 				{
 					// Allow the main thread to periodically check for the "start" command
 					continue;
 				} 
-				catch (IOException e) 
+				catch(IOException e) 
 				{
 					System.err.println("ERROR handling client acceptances");
 					e.printStackTrace();
@@ -130,26 +159,30 @@ public class Server
 			tcpThread.writeStringToAllClients("start");
 			
 			//TODO Loop through multiple questions to send to clients
-			Path tempFile = Files.createTempFile("question", ".txt");
+			Path tempFile = Files.createTempFile("q1", ".txt");
 	        try (BufferedWriter fileWriter = Files.newBufferedWriter(tempFile)) 
 	        {
-	        	File file = new File("question_format.txt");
-				Scanner scanner = new Scanner (new FileInputStream(file));
+	        	File file = new File("questions/question1.txt");
+				Scanner fileReader = new Scanner (new FileInputStream(file));
 				
 				// Write question to temporary file
-				while(scanner.hasNext())
+				while(fileReader.hasNext())
 				{
-					fileWriter.write(scanner.nextLine());
+					fileWriter.write(fileReader.nextLine());
 					fileWriter.newLine();
 				}
 				
 				// Write question file to all clients
 				tcpThread.writeFileToAllClients(tempFile.toFile());
+				
+				// Close temp file streams
+				fileWriter.close();
+				fileReader.close();
 	        }
 	        
 	        // Wait for polling to complete
 	        Boolean pollingComplete;
-	        while (pollingComplete = !udpThread.isPollingComplete())
+	        while(pollingComplete = !udpThread.isPollingComplete())
 	        {
 	        	// Do nothing
 	        	Thread.sleep(0);
@@ -163,28 +196,30 @@ public class Server
 	        
 	        // Alert clients whether they won the poll
 	        tcpThread.ackClients(ackClientID);
+	        System.out.println("CLIENTS ACKED");
 	        
 	        // Wait for answer from client
 	        Boolean answerReceived;
-	        while (answerReceived = !tcpThread.isAnswerReceived())
+	        while(answerReceived = !tcpThread.isAnswerReceived())
 	        {
 	        	// Do nothing
 	        	Thread.sleep(0);
 	        }
 	        
-	        System.out.println("CLIENT'S ANSWER: " + tcpThread.getClientAnswer(ackClientID));
+	        System.out.println("CLIENT CORRECT: " + tcpThread.isClientAnswerCorrect(ackClientID, answerKey[1]));
 			
+	        
 			try 
 			{
 				// Wait for game to finish
 				tcpThread.join();
 			} 
-			catch (InterruptedException e) 
+			catch(InterruptedException e) 
 			{
 				System.err.println("Game interrupted");
 			}
 		} 
-		catch (Exception e) 
+		catch(Exception e) 
 		{
 			System.err.println("Exception caught when trying to listen on port " + portNumber + " or listening for a connection");
 			System.out.println(e.getMessage());
@@ -195,6 +230,8 @@ public class Server
 		System.exit(0);
 	}
 }
+
+
 
 
 // Thread to wait for start of game
@@ -208,7 +245,7 @@ class RunThread extends Thread
 	{
 		// Wait continuously for the "start" command
 		BufferedReader terminalInput = new BufferedReader(new InputStreamReader(System.in));
-		while (!runCommandReceived) 
+		while(!runCommandReceived) 
 		{
 			System.out.println("Enter 'start' to begin game:");
 			String input = "";
@@ -217,13 +254,13 @@ class RunThread extends Thread
 			{
 				input = terminalInput.readLine().trim();
 			}
-			catch (IOException e) 
+			catch(IOException e) 
 			{
 				System.err.println("ERROR with input");
 				e.printStackTrace();
 			}
 
-			if (input.equalsIgnoreCase("start")) 
+			if(input.equalsIgnoreCase("start")) 
 			{
 				synchronized (lock) 
 				{
@@ -241,7 +278,7 @@ class RunThread extends Thread
 		{
 			terminalInput.close();
 		} 
-		catch (IOException e) 
+		catch(IOException e) 
 		{
 			System.err.println("ERROR closing input stream");
 			e.printStackTrace();
@@ -338,34 +375,45 @@ class TCPThread extends Thread
 		}
 	}
 	
-	// Alert clients whether they won the poll
+	// Alert clients whether they won the poll, or if nobody polled
 	public void ackClients(int ackClientID)
 	{
-		for (ClientThread client : clientThreads)
+		// At least one client polled
+		if(ackClientID != -1)
 		{
-			// Alert client with the fastest poll that they can answer
-			if (client.getClientID() == ackClientID)
-				client.writeStringToClient("ack");
-			
-			// Alert other clients that they were late in polling
-			else
-				client.writeStringToClient("negative-ack");
+			for (ClientThread client : clientThreads)
+			{
+				// Alert client with the fastest poll that they can answer
+				if(client.getClientID() == ackClientID)
+					client.writeStringToClient("ack");
+
+				// Alert other clients that they were late in polling
+				else
+					client.writeStringToClient("negative-ack");
+			}
 		}
+		
+		// No clients polled
+		else
+		{
+			System.out.println("NO POLLS");
+			writeStringToAllClients("no-poll");
+		}	
 	}
 	
-	// Get answer from client who won polling
-	public String getClientAnswer(int clientID)
+	// Obtain and check answer from client who won polling, returns whether they answered correctly
+	public Boolean isClientAnswerCorrect(int clientID, String correctAnswer)
 	{
 		String answer = null;
 		
 		for (ClientThread client : clientThreads)
 		{
-			// Alert client with the fastest poll that they can answer
-			if (client.getClientID() == clientID)
+			// Obtain answer from client with the fastest poll
+			if(client.getClientID() == clientID)
 				answer = client.getClientAnswer();
 		}
 		
-		return answer;
+		return (answer.equals(correctAnswer));
 	}
 	
 	// Set the value for whether the client's answer was received
@@ -389,16 +437,16 @@ class TCPThread extends Thread
 		// Indicate game has started
 		gameInProgress = true;
 		
-		while (true)
+		while(true)
 		{
 			try 
 			{	
 				// Safely remove closed sockets
 				Iterator<Socket> socketIterator = clientSockets.iterator();
-				while (socketIterator.hasNext()) 
+				while(socketIterator.hasNext()) 
 				{
 				    Socket socket = socketIterator.next();
-				    if (socket.isClosed()) 
+				    if(socket.isClosed()) 
 				    {
 				        System.out.println("Client disconnected... Removing socket...");
 				        socketIterator.remove(); // Safe removal
@@ -407,10 +455,10 @@ class TCPThread extends Thread
 
 				// Safely remove killed clients
 				Iterator<ClientThread> clientThreadIterator = clientThreads.iterator();
-				while (clientThreadIterator.hasNext()) 
+				while(clientThreadIterator.hasNext()) 
 				{
 				    ClientThread client = clientThreadIterator.next();
-				    if (client.isKilled()) 
+				    if(client.isKilled()) 
 				    {
 				        System.out.println("Removing thread for Client " + client.getClientID() + "...");
 				        clientThreadIterator.remove(); // Safe removal
@@ -436,12 +484,12 @@ class TCPThread extends Thread
 			}
 			
 			// Prevent blocking if client requests kill
-			catch (SocketTimeoutException e) 
+			catch(SocketTimeoutException e) 
 			{
 				continue;
 			} 
 			
-			catch (IOException e) 
+			catch(IOException e) 
 			{
 				System.err.println("ERROR handling client acceptances");
 				e.printStackTrace();
@@ -470,7 +518,7 @@ class UDPThread extends Thread
 		Boolean isComplete = clientPolls.contains(-1);
 		
 		// Remove all -1s from queue
-		if (isComplete)
+		if(isComplete)
 		{
 			System.out.print("INITAL ");
 			printQueue();
@@ -510,7 +558,7 @@ class UDPThread extends Thread
 		int first = -1;
 		
 		// If at least 1 client polls
-		if (clientPolls.size() > 0)
+		if(clientPolls.size() > 0)
 			first = clientPolls.poll();
 		
 		clientPolls.clear();
@@ -526,7 +574,7 @@ class UDPThread extends Thread
 			byte[] receiveData = new byte[1024];
 
 			// Infinite loop to continuously listen for incoming packets
-			while (true) 
+			while(true) 
 			{
 				// Create a DatagramPacket to receive incoming UDP packets
 				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
@@ -539,7 +587,7 @@ class UDPThread extends Thread
 				int id = Integer.valueOf(receivedID);
 				
 				// If data represents a buzz from a client
-				if (id >= 0)
+				if(id >= 0)
 					System.out.println("Received buzz from Client " + id);
 				
 				// Add data to queue
@@ -559,7 +607,7 @@ class UDPThread extends Thread
 //				socket.send(sendPacket);
 			}
 		} 
-		catch (Exception e) 
+		catch(Exception e) 
 		{
 			e.printStackTrace();
 		}
@@ -599,7 +647,7 @@ class ClientThread extends Thread
 			reader = new ObjectInputStream(clientSocket.getInputStream());
 		} 
 		
-		catch (IOException e) 
+		catch(IOException e) 
 		{
 			System.err.println("ERROR initializing writer/reader for Client " + clientID);
 			e.printStackTrace();
@@ -626,7 +674,7 @@ class ClientThread extends Thread
 			writer.writeObject(file);
 			writer.flush();
 		} 
-		catch (IOException e) 
+		catch(IOException e) 
 		{
 			System.err.println("ERROR writing file to client " + clientID);
 			e.printStackTrace();
@@ -641,7 +689,7 @@ class ClientThread extends Thread
 			writer.writeObject(str);
 			writer.flush();
 		} 
-		catch (IOException e) 
+		catch(IOException e) 
 		{
 			System.err.println("ERROR writing string to client " + clientID);
 			e.printStackTrace();
@@ -656,7 +704,7 @@ class ClientThread extends Thread
 			writer.writeInt(x);
 			writer.flush();
 		} 
-		catch (IOException e) 
+		catch(IOException e) 
 		{
 			System.err.println("ERROR writing integer to client " + clientID);
 			e.printStackTrace();
@@ -685,10 +733,10 @@ class ClientThread extends Thread
 		if(tcpThread.gameInProgress())
 			writeStringToClient("wait");
 
-		while (true)
+		while(true)
 		{
 			// End client thread
-			if (clientSocket.isClosed())
+			if(clientSocket.isClosed())
 				break;
 
 			// Listen for incoming TCP messages from client
@@ -698,10 +746,10 @@ class ClientThread extends Thread
 				Object input = reader.readObject();
 
 				// Server receives incoming TCP message from client
-				if (input instanceof String)
+				if(input instanceof String)
 				{
 					// Client requests kill
-					if (((String)input).equals("kill"))
+					if(((String)input).equals("kill"))
 					{
 						clientSocket.close();
 						System.out.println("Killing Client " + clientID + "...");
@@ -720,19 +768,19 @@ class ClientThread extends Thread
 				}
 			}
 
-			catch (SocketTimeoutException e) 
+			catch(SocketTimeoutException e) 
 			{
 				// Prevent blocking while listening for object
 				continue;
 			}
 
-			catch (ClassNotFoundException e) 
+			catch(ClassNotFoundException e) 
 			{
 				System.err.println("ERROR receiving input while closing");
 				e.printStackTrace();
 			}
 
-			catch (IOException e) 
+			catch(IOException e) 
 			{
 				System.err.println("ERROR closing client");
 				e.printStackTrace();
