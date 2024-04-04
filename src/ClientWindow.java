@@ -238,7 +238,7 @@ public class ClientWindow implements ActionListener
 		
 		question = new JLabel(); // represents the question
 		window.add(question);
-		question.setBounds(10, 5, 350, 100);  
+		question.setBounds(10, 5, 600, 100);  
 
 		// Option radio buttons
 		options = new JRadioButton[4];
@@ -249,7 +249,7 @@ public class ClientWindow implements ActionListener
 			options[index] = new JRadioButton("Option " + (index+1));  // represents an option
 			// if a radio button is clicked, the event would be thrown to this class to handle
 			options[index].addActionListener(this);
-			options[index].setBounds(10, 110+(index*20), 350, 20);
+			options[index].setBounds(10, 110+(index*20), 600, 20);
 			options[index].setEnabled(false);
 			window.add(options[index]);
 			optionGroup.add(options[index]);
@@ -647,7 +647,7 @@ public class ClientWindow implements ActionListener
 
 			// Set frame properties
 			setSize(400,400);
-			setBounds(50, 50, 400, 400);
+			setBounds(50, 50, 600, 400);
 			setLayout(null);
 			setVisible(true);
 			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
