@@ -1,9 +1,11 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -281,6 +283,7 @@ public class ClientWindow implements ActionListener
 		window.add(submit);
 
 		Object input;
+		String questionFileName = "./temp" + ".txt";
 		
 		// Continually read and display questions from server
 		try
@@ -289,13 +292,21 @@ public class ClientWindow implements ActionListener
 			while((input = reader.readObject()) != null) 
 			{
 				// Process the file and display question
-				if(input instanceof File) 
+				if(input instanceof Integer) 
 				{					
-					// Clear radio button selections
-					this.optionGroup.clearSelection();
-					
-					String[] questionInfo = new String[5];
-					File tempFile = (File) input;
+					// Receive the file segment and client number from the server
+		            byte[] fileSegment = readFile(((Integer)input).intValue());
+
+		            // Write to file
+		            FileOutputStream fileWriter = new FileOutputStream(questionFileName);
+		            fileWriter.write(fileSegment);
+		            fileWriter.close();
+
+		            // Clear radio button selections
+		            this.optionGroup.clearSelection();
+
+		            String[] questionInfo = new String[5];
+		            File tempFile = new File(questionFileName);
 					Scanner scanner = new Scanner (new FileInputStream(tempFile));
 					int index = 0;
 
@@ -324,6 +335,7 @@ public class ClientWindow implements ActionListener
 					{
 						poll.setEnabled(true);
 						alertLabel.setVisible(false);
+						deleteFile(questionFileName);
 					}
 
 					// This client was the first to poll
@@ -503,6 +515,40 @@ public class ClientWindow implements ActionListener
 		else
 			return false;
 	}
+	
+	// Read file content and return byte array
+	public byte[] readFile(int size) throws IOException 
+	{
+		
+        byte[] data = new byte[size];
+        
+        
+        int totalBytesRead = 0;
+        while (totalBytesRead < size) 
+        {
+            int bytesRead = reader.read(data, totalBytesRead, size - totalBytesRead);
+            
+            if (bytesRead == -1) 
+            {
+                break;
+            }
+            totalBytesRead += bytesRead;
+        }
+        return data;
+    }
+	
+	// Delete temp file between questions
+    private static void deleteFile(String fileName) 
+    {
+        File file = new File(fileName);
+        if (file.exists()) {
+            if (file.delete()) {
+                System.out.println("File deleted successfully: " + fileName);
+            } else {
+                System.out.println("Failed to delete file: " + fileName);
+            }
+        }
+    }
 	
 	// Toggle submit and option buttons enabled/disabled
 	public void toggleButtons()
@@ -715,6 +761,7 @@ public class ClientWindow implements ActionListener
 				{
 					writeToServerTCP("no answer");
 					userAnswer = "";
+					submit.setEnabled(false);
 				}
 				
 				timer.setText("Times up!");
