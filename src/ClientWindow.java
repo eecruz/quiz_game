@@ -281,7 +281,7 @@ public class ClientWindow implements ActionListener
 		window.add(submit);
 
 		Object input;
-		String questionFileName = "./temp" + ".txt";
+		String questionFileName = "./temp.txt";
 		
 		// Continually read and display questions from server
 		try
@@ -692,6 +692,9 @@ public class ClientWindow implements ActionListener
 				{
 					System.out.println("Closing client connection...");
 
+					// Delete temporary file for question
+					deleteFile("./temp.txt");
+					
 					// Send kill request on close
 					writeToServerTCP("kill");
 
