@@ -1,15 +1,11 @@
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
@@ -17,7 +13,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -177,28 +172,6 @@ public class Server
 				
 				String fileName = "./questions/question" + questionNum + ".txt";
 				tcpThread.writeFileToAllClients(fileName);
-				
-//				// Create temporary file to send to client
-//				Path tempFile = Files.createTempFile("q" + questionNum, ".txt");
-//				try (BufferedWriter fileWriter = Files.newBufferedWriter(tempFile)) 
-//				{
-//					File file = new File("questions/question" + questionNum + ".txt");
-//					Scanner fileReader = new Scanner (new FileInputStream(file));
-//
-//					// Write question to temporary file
-//					while(fileReader.hasNext())
-//					{
-//						fileWriter.write(fileReader.nextLine());
-//						fileWriter.newLine();
-//					}
-//
-//					// Write question file to all clients
-//					tcpThread.writeFileToAllClients(tempFile.toFile());
-//
-//					// Close temp file streams
-//					fileWriter.close();
-//					fileReader.close();
-//				}
 				
 				Thread.sleep(2000);
 
@@ -438,15 +411,7 @@ class TCPThread extends Thread
 	{
 		for(ClientThread client : clientThreads)
 		{
-			try 
-			{
-				client.writeFileToClient(fileName);
-			} 
-			
-			catch (IOException e) 
-			{
-				System.err.println("ERROR sending file to client " + clientID);
-			}
+			client.writeFileToClient(fileName);
 		}
 	}
 	
@@ -816,38 +781,27 @@ class ClientThread extends Thread
 		return isKilled;
 	}
 	
-//	// Write a file to client
-//	public void writeFileToClient(File file) 
-//	{
-//		try 
-//		{
-//			writer.writeObject(file);
-//			writer.flush();
-//		} 
-//		
-//		catch(SocketException e1)
-//		{
-//			System.err.println("ERROR writing file to client " + clientID + "... Socket is closed");
-//		}
-//		
-//		catch(IOException e2) 
-//		{
-//			System.err.println("ERROR writing file to client " + clientID);
-//		}
-//	}
-	
 	// Write file content to client as a byte array
-	public void writeFileToClient(String fileName) throws IOException 
+	public void writeFileToClient(String fileName)
 	{
-        //String fileName = "./questions/words.txt";
-        byte[] fileContent = Files.readAllBytes(Paths.get(fileName));
-                        
-        // Send the size of the segment
-        writer.writeObject(Integer.valueOf(fileContent.length));
-    
-        // Send the actual content
-        writer.write(fileContent, 0, fileContent.length);
-        writer.flush();    
+		try 
+		{
+			// Get file content as an array
+			byte[] fileContent;
+			fileContent = Files.readAllBytes(Paths.get(fileName));
+			
+			// Send the size of the segment
+	        writer.writeObject(Integer.valueOf(fileContent.length));
+	    
+	        // Send the actual content
+	        writer.write(fileContent, 0, fileContent.length);
+	        writer.flush();  
+		} 
+		
+		catch (IOException e) 
+		{
+			System.err.println("ERROR sending file to client " + clientID);
+		}         
     }
 	
 	// Write a string to client
@@ -887,9 +841,7 @@ class ClientThread extends Thread
 		catch(IOException e2) 
 		{
 			System.err.println("ERROR writing integer to client " + clientID);
-		}
-		
-		
+		}	
 	}
 	
 	// Get answer if this client won the poll
