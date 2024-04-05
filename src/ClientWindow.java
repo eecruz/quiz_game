@@ -441,6 +441,7 @@ public class ClientWindow implements ActionListener
 					// Game has finished (this client did not win)
 					else if(input.equals("end"))
 					{
+						deleteFile(questionFileName);
 						JOptionPane.showMessageDialog(window, "Game has finished! You scored: " + score,
 								"Game Finished", JOptionPane.PLAIN_MESSAGE);
 						System.exit(0);
@@ -449,6 +450,7 @@ public class ClientWindow implements ActionListener
 					// Game has finished (this client won)
 					else if(input.equals("win"))
 					{
+						deleteFile(questionFileName);
 						JOptionPane.showMessageDialog(window, "You won! You scored: " + score,
 								"Winner!!!", JOptionPane.PLAIN_MESSAGE);
 						System.exit(0);
