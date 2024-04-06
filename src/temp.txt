@@ -1,5 +1,5 @@
-Q5 What was Alan Turing NOT known for?
-The Turing Test
-Cracking the Enigma Code
-Pioneering Computer Science
-Developing the First Advance Programming Language
+Q11 What is DNS Spoofing? 
+The DNS routing process fails randomly 
+Encrypted DNS becomes temporarily broken through
+A fake DNS error is displayed, blocking user access
+A fake IP address is received instead of a real IP address
