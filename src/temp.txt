@@ -1,5 +1,5 @@
-Q11 What is DNS Spoofing? 
-The DNS routing process fails randomly 
-Encrypted DNS becomes temporarily broken through
-A fake DNS error is displayed, blocking user access
-A fake IP address is received instead of a real IP address
+Q8 What does the "J" AJAX stand for?
+Javascript
+Java
+Javaswing
+Jaiswal

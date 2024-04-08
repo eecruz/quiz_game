@@ -342,7 +342,7 @@ public class ClientWindow implements ActionListener
 						alertLabel.setForeground(new Color(54, 102, 0)); // Dark green
 						alertLabel.setText("You had the fastest poll! Answer before the timer runs out!");
 						alertLabel.setVisible(true);
-						toggleButtons();
+						toggleButtons(true);
 						clock = new TimerCode(10, false, true);  // represents clocked task that should run after X seconds
 						t.schedule(clock, 0, 1000); // clock is called every second
 
@@ -397,7 +397,7 @@ public class ClientWindow implements ActionListener
 						alertLabel.setForeground(Color.RED);
 						alertLabel.setText("You didn't submit anything! Did you even know the answer?");
 						alertLabel.setVisible(true);
-						toggleButtons();
+						toggleButtons(false);
 					}
 					
 					// Answering client (not this client) answered correctly
@@ -551,15 +551,15 @@ public class ClientWindow implements ActionListener
     }
 	
 	// Toggle submit and option buttons enabled/disabled
-	public void toggleButtons()
+	public void toggleButtons(boolean enable)
 	{
 		for (JRadioButton button : options)
 		{
-			button.setEnabled(!button.isEnabled());
+			button.setEnabled(enable);
 			button.setSelected(false);
 		}
 		
-		submit.setEnabled(!submit.isEnabled());
+		submit.setEnabled(enable);
 	}
 	
 	// Write string to server using TCP
@@ -634,7 +634,7 @@ public class ClientWindow implements ActionListener
 				alertLabel.setText("Submitted: Option 1");
 				alertLabel.setVisible(true);
 				options[0].setSelected(false);
-				toggleButtons();
+				toggleButtons(false);
 			}
 			
 			else if(options[1].isSelected())
@@ -644,7 +644,7 @@ public class ClientWindow implements ActionListener
 				alertLabel.setText("Submitted: Option 2");
 				alertLabel.setVisible(true);
 				options[1].setSelected(false);
-				toggleButtons();
+				toggleButtons(false);
 			}
 			
 			else if(options[2].isSelected())
@@ -655,7 +655,7 @@ public class ClientWindow implements ActionListener
 				alertLabel.setVisible(true);
 				options[2].setSelected(false);
 
-				toggleButtons();
+				toggleButtons(false);
 			}
 			
 			else if(options[3].isSelected())
@@ -666,7 +666,7 @@ public class ClientWindow implements ActionListener
 				alertLabel.setVisible(true);
 				options[3].setSelected(false);
 
-				toggleButtons();
+				toggleButtons(false);
 			}
 			
 			else // No answer provided
@@ -674,7 +674,7 @@ public class ClientWindow implements ActionListener
 				alertLabel.setForeground(Color.RED);
 				alertLabel.setText("*Please select an answer before you submit!*");
 				alertLabel.setVisible(true);
-				toggleButtons();
+				toggleButtons(false);
 			}
 		}
 	}
@@ -765,7 +765,7 @@ public class ClientWindow implements ActionListener
 				{
 					writeToServerTCP("no answer");
 					userAnswer = "";
-					submit.setEnabled(false);
+					toggleButtons(false);
 				}
 				
 				timer.setText("Times up!");
