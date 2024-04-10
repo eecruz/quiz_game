@@ -674,7 +674,6 @@ public class ClientWindow implements ActionListener
 				alertLabel.setForeground(Color.RED);
 				alertLabel.setText("*Please select an answer before you submit!*");
 				alertLabel.setVisible(true);
-				toggleButtons(false);
 			}
 		}
 	}

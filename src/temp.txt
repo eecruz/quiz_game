@@ -1,5 +1,5 @@
-Q8 What does the "J" AJAX stand for?
-Javascript
-Java
-Javaswing
-Jaiswal
+Q20 What is the resource record format?
+(name, type, value, ttl)
+(name, value, type, ttl)
+(name, ttl, value, type)
+(name, type, ttl, value)
